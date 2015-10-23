@@ -218,7 +218,7 @@ def create_mosaic(jpg_group):
 	new_pic.paste(image[1].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,1*y_pic+2*y_border))
 	new_pic.paste(image[2].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,2*y_pic+3*y_border))
 	new_pic.paste(image[3].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,3*y_pic+4*y_border))
-	new_pic.save(config.file_path + now + '_total.jpg')
+	new_pic.save('/home/pi/photobooth/backups/' + now + '_total.jpg')
 	#try:
 	#	new_pic.save('/home/pi/photobooth/backups/' + now + '_total.jpg')
 	#except:
@@ -228,7 +228,7 @@ def print_pics(jpg_group):
 	now = jpg_group
 	print "Printing..."
 	#printing
-	printcommand = "lp -d Canon_CP910 " + config.file_path + now + "_total.jpg"
+	printcommand = "lp -d Canon_CP910 " + '/home/pi/photobooth/backups/' + now + "_total.jpg"
 	os.system(printcommand)
 	#if(printed_count == paper_total):
 	#	show_image(real_path + "/assets/empty_printer.png")
@@ -239,7 +239,7 @@ def print_pics(jpg_group):
 
 def tweet_pics(jpg_group):
     now = jpg_group
-    twitter_photo = open(config.file_path + now + '_total.jpg','rb')
+    twitter_photo = open('/home/pi/photobooth/backups/' + now + '_total.jpg','rb')
     twitter_api.update_status_with_media(media=twitter_photo, status='#RPiBooth')
 
 def display_pics(jpg_group):
@@ -270,7 +270,7 @@ def pics_backup(now):
     shutil.copy('/home/pi/photobooth/pics/' + now + '-03.jpg', '/media/backup/pics/')
     shutil.copy('/home/pi/photobooth/pics/' + now + '-04.jpg', '/media/backup/pics/')
     shutil.copy('/home/pi/photobooth/pics/' + now + '.gif', '/media/backup/pics/')
-    shutil.copy('/home/pi/photobooth/pics/' + now + '_total.jpg', '/media/backup/pics/')
+    shutil.copy('/home/pi/photobooth/backups/' + now + '_total.jpg', '/media/backup/pics/')
 
 def tumblr_backup(now):
     #shutil.copyfile('/home/pi/photobooth/backup' + now + '-01.jpg', '/home/pi/photobooth/backup')
@@ -283,7 +283,7 @@ def tumblr_backup(now):
 # define the photo taking function for when the big button is pressed
 def start_photobooth():
 
-	################################# Begin Step 1 #################################
+	################################# Begin Step 1 ##################################
 	show_image(real_path + "/assets/blank.png")
 	print "Get Ready"
 	GPIO.output(led2_pin,True);
