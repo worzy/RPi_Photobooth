@@ -1,5 +1,5 @@
 import config
-
+#import os
 from twython import Twython
 
 
@@ -11,4 +11,12 @@ twitter_api = Twython(
 	config.twitter_ACCESS_SECRET,
 );
 
-print 'hello'
+print 'hello, I am about to tweet. HERE WE GO'
+
+twitter_photo = open("../samplepics/hedgehog.gif",'rb')
+
+response =twitter_api.upload_media(media=twitter_photo)
+#twitter_api.update_status(status='Beep Boop! I am a robot')
+twitter_api.update_status(media_ids=[response['media_id']], status='Beep Boop! I am still a robot')
+print 'I did it! are you proud of me?'
+
