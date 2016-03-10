@@ -26,7 +26,7 @@ def display_pics(jpg_group):
     alarm(3)
     try:
         pygame.init()
-        screen = pygame.display.set_mode((w,h),pygame.FULLSCREEN) 
+        screen = pygame.display.set_mode((w,h)) 
         alarm(0)
     except Alarm:
         raise KeyboardInterrupt
