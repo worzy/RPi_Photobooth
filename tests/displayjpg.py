@@ -4,7 +4,7 @@ import time
 import pygame
 from signal import alarm, signal, SIGALRM, SIGKILL
 
-now = "20140516121953"
+now = "..\samplepics\image"
 total_pics = 4 # number of pics  to be taken
 w = 800
 h = 450
