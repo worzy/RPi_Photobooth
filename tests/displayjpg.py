@@ -3,8 +3,10 @@
 import time
 import pygame
 from signal import alarm, signal, SIGALRM, SIGKILL
+import sys
+import traceback
 
-now = "..\samplepics\image"
+now = "../samplepics/image"
 total_pics = 4 # number of pics  to be taken
 w = 800
 h = 450
@@ -34,7 +36,7 @@ def display_pics(jpg_group):
     pygame.mouse.set_visible(False) #hide the mouse cursor	
     for i in range(0, replay_cycles): #show pics a few times
         for i in range(1, total_pics+1): #show each pic
-            filename = jpg_group + "-0" + str(i) + ".jpg"
+            filename = jpg_group + "0" + str(i) + ".jpg"
             print filename
             img=pygame.image.load(filename) 
             img = pygame.transform.scale(img,(transform_x,transfrom_y))
