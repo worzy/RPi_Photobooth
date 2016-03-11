@@ -2,6 +2,7 @@
 
 import time
 import pygame
+from signal import alarm, signal, SIGALRM, SIGKILL
 import sys
 import traceback
 
@@ -19,9 +20,18 @@ replay_cycles = 4 # how many times to show each photo on-screen after taking
 def display_pics(jpg_group):
     # this section is an unbelievable nasty hack - for some reason Pygame
     # needs a keyboardinterrupt to initialise in some limited circs (second time running)
-
-    pygame.init()
-    screen = pygame.display.set_mode((w,h)) 
+    class Alarm(Exception):
+        pass
+    def alarm_handler(signum, frame):
+        raise Alarm
+    signal(SIGALRM, alarm_handler)
+    alarm(3)
+    try:
+        pygame.init()
+        screen = pygame.display.set_mode((w,h)) 
+        alarm(0)
+    except Alarm:
+        raise KeyboardInterrupt
     pygame.display.set_caption('Photo Booth Pics')
     pygame.mouse.set_visible(False) #hide the mouse cursor	
     for i in range(0, replay_cycles): #show pics a few times
