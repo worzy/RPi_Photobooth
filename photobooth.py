@@ -225,20 +225,20 @@ def display_pics(jpg_group):
     # needs a keyboardinterrupt to initialise in some limited circs (second time running)
         class Alarm(Exception):
                 pass
-	def alarm_handler(signum, frame):
-        	raise Alarm
-	signal(SIGALRM, alarm_handler)
-	alarm(3)
-	try:
-		screen = init_pygame()
-		alarm(0)
-	except Alarm:
-		raise KeyboardInterrupt
-	for i in range(0, replay_cycles): #show pics a few times
-		for i in range(1, total_pics+1): #show each pic
-			filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
+        def alarm_handler(signum, frame):
+                raise Alarm
+        signal(SIGALRM, alarm_handler)
+        alarm(3)
+        try:
+                screen = init_pygame()
+                alarm(0)
+        except Alarm:
+                raise KeyboardInterrupt
+        for i in range(0, replay_cycles): #show pics a few times
+                for i in range(1, total_pics+1): #show each pic
+                        filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
                         show_image(filename);
-			time.sleep(replay_delay) # pause
+                        time.sleep(replay_delay) # pause
 
 def pics_backup(now):
     print "Backing Up Photos"
