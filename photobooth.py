@@ -22,30 +22,43 @@ import shutil
 from signal import alarm, signal, SIGALRM, SIGKILL
 
 ########################
-### Variables Config ####
+### System Config ###
 ########################
-led1_pin = 16 # LED 1 #15
-led2_pin = 10 # LED 2 #19
-led3_pin = 21 # LED 3 #21
-led4_pin = 5 # LED 4 #23
-button1_pin = 23 # pin for the big red button
-button2_pin = 4 # pin for printer switch
-button3_pin = 17 # pin for button to end the program, but not shutdown the pi
-
 post_online = 1 # default 1. Change to 0 if you don't want to upload pics.
+backup_pics = 1 # backup pics = 1, no backup, change to 0
+fullscreen =0 # set pygame to be fullscreen or not - useful for debugging
+
+########################
+### Camera Config ###
+########################
+
+pixel_width = 800  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+# pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
+pixel_height = 480  # 666
+
+camera_vflip=False
+camera_hflip=False
+
 total_pics = 4 # number of pics to be taken
 capture_delay = 1 # delay between pics
 prep_delay = 5 # number of seconds at step 1 as users prep to have photo taken
-gif_delay = 50 # How much time between frames in the animated gif
 restart_delay = 10 # how long to display finished message before beginning a new session
-paper_total = 16 # number of pages the printer can handle
-printed_count = 0 # number of pages printed since last refill
-printer_switch = 0
-backup_pics = 1 # backup pics = 1, no backup, change to 0
 
-fullscreen =0; # set pygame to be fullscreen or not - useful for debugg
-monitor_w = 800 #800
-monitor_h = 480 #480
+
+########################
+### Gif Config ###
+########################
+gif_delay = 50 # How much time between frames in the animated gif
+gif_width=640
+gif_height=360
+
+
+########################
+### Monitor Config ###
+########################
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
+monitor_w = 1024 #1024 # this is res of makibes 7" screen
+monitor_h = 600 #600
 transform_x = 640 #640 # how wide to scale the jpg when replaying
 transfrom_y = 480 #480 # how high to scale the jpg when replaying
 offset_x = 10 # how far off to left corner to display photos
@@ -53,10 +66,13 @@ offset_y = 0 # how far off to left corner to display photos
 replay_delay = 1 # how much to wait in-between showing pics on-screen after taking
 replay_cycles = 1 # how many times to show each photo on-screen after taking
 
+
+########################
+### Internet Config ###
+########################
+
 test_server = 'www.google.com'
 real_path = os.path.dirname(os.path.realpath(__file__))
-
-font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSerif.ttf", 200)
 
 #setup the twitter api client
 twitter_api = Twython(
@@ -64,11 +80,18 @@ twitter_api = Twython(
         config.twitter_CONSUMER_SECRET,
         config.twitter_ACCESS_KEY,
         config.twitter_ACCESS_SECRET,
-);
+)
 
 ####################
-### Other Config ###
+### GPIO Config ####
 ####################
+led1_pin = 16 # LED 1 #15
+led2_pin = 10 # LED 2 #19
+led3_pin = 21 # LED 3 #21
+led4_pin = 5 # LED 4 #23
+button1_pin = 23 # pin for the big red button
+button2_pin = 4 # pin for printer switch
+button3_pin = 17 # pin for button to end the program, but not shutdown the pi
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(led1_pin,GPIO.OUT) # LED 1
 GPIO.setup(led2_pin,GPIO.OUT) # LED 2
@@ -77,19 +100,21 @@ GPIO.setup(led4_pin,GPIO.OUT) # LED 4
 GPIO.setup(button1_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # falling edge detection on button 1
 GPIO.setup(button2_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # falling edge detection on button 2
 GPIO.setup(button3_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # falling edge detection on button 3
-GPIO.output(led1_pin,False);
-GPIO.output(led2_pin,False);
-GPIO.output(led3_pin,False);
-GPIO.output(led4_pin,False);
+GPIO.output(led1_pin,False)
+GPIO.output(led2_pin,False)
+GPIO.output(led3_pin,False)
+GPIO.output(led4_pin,False)
 
 #################
 ### Functions ###
 #################
 
+
 def cleanup():
     print('Ended abruptly')
     GPIO.cleanup()
     #atexit.register(cleanup)
+
 
 def shut_it_down(channel):
     print "Shutting down..."
@@ -99,11 +124,13 @@ def shut_it_down(channel):
     #GPIO.output(led4_pin,True)
     os.system("sudo halt")
 
+
 def exit_photobooth(channel):
     print "Photo booth app ended. RPi still running"
     #GPIO.output(led1_pin,True)
     time.sleep(3)
     raise SystemExit
+
 
 def clear_pics(foo): #why is this function being passed an arguments?
     #delete files in folder on startup
@@ -117,6 +144,7 @@ def clear_pics(foo): #why is this function being passed an arguments?
     #GPIO.output(led3_pin,False)
     #GPIO.output(led4_pin,False)
 
+
 def is_connected():
     try:
     # see if we can resolve the host name -- tells us if there is
@@ -129,6 +157,7 @@ def is_connected():
     except:
         pass
     return False
+
 
 def init_pygame():
     pygame.init()
@@ -159,6 +188,7 @@ def countdown(camera):
     draw.text((monitor_w/2,monitor_h/2), " ", (255, 255, 255), font=font)
     overlay_renderer.update(img.tostring())
 
+
 def show_image(image_path):
     screen = init_pygame()
     img=pygame.image.load(image_path)
@@ -166,64 +196,12 @@ def show_image(image_path):
     screen.blit(img,(offset_x,offset_y))
     pygame.display.flip()
 
-def create_mosaic(jpg_group):
-    now = jpg_group
-    ##moving original pics to backup
-    ##copypics = "cp " + file_path + now + "*.jpg "+ file_path
-    ##print copypics
-    ##os.system(copypics)
-
-    ##resizing + montaging
-    #print "Resizing Pics..." #necessary?
-    ##convert -resize 968x648 /home/pi/photobooth/pics/*.jpg /home/pi/photobooth/pics_tmp/*_tmp.jpg
-    #graphicsmagick = "gm mogrify -resize 968x648 " + config.file_path + now + "*.jpg"
-    #copypics = "cp " + config.file_path + now + "*.jpg "+ config.file_path
-
-    ##print "Resizing with command: " + graphicsmagick
-    #os.system(graphicsmagick)
-    #os.system(copypics)
-
-    #print "Montaging Pics..."
-    #graphicsmagick = "gm montage " + config.file_path + now + "*.jpg -tile 2x2 -geometry 1000x699+10+10 " + config.file_path + now + "_picmontage.jpg"
-    #print "Montaging images with command: " + graphicsmagick
-    #os.system(graphicsmagick)
-
-    #print "Adding Label..."
-    #graphicsmagick = "gm convert -append "+real_path+ "/assets/bn_booth_label_h.jpg  " + config.file_path + now + "_picmontage.jpg " + config.file_path + now + "_print.jpg"
-    #print "Adding label with command: " + graphicsmagick
-    #os.system(graphicsmagick)
-
-    image = list()
-    image.append(Image.open(config.file_path + now + '-01.jpg'))
-    image.append(Image.open(config.file_path + now + '-02.jpg'))
-    image.append(Image.open(config.file_path + now + '-03.jpg'))
-    image.append(Image.open(config.file_path + now + '-04.jpg'))
-
-    x_pic = 500
-    y_pic = 375
-    x_border = 40
-    y_border = 10
-    x_total = 1181
-    y_total = 1748
-    new_pic = Image.new('RGB', (x_total, y_total), (255, 255, 255))
-    new_pic.paste(image[0].resize((x_pic,y_pic), Image.ANTIALIAS), (x_border,y_border))
-    new_pic.paste(image[1].resize((x_pic,y_pic), Image.ANTIALIAS), (x_border,1*y_pic+2*y_border))
-    new_pic.paste(image[2].resize((x_pic,y_pic), Image.ANTIALIAS), (x_border,2*y_pic+3*y_border))
-    new_pic.paste(image[3].resize((x_pic,y_pic), Image.ANTIALIAS), (x_border,3*y_pic+4*y_border))
-    new_pic.paste(image[0].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,y_border))
-    new_pic.paste(image[1].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,1*y_pic+2*y_border))
-    new_pic.paste(image[2].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,2*y_pic+3*y_border))
-    new_pic.paste(image[3].resize((x_pic,y_pic), Image.ANTIALIAS), (x_total-x_border-x_pic,3*y_pic+4*y_border))
-    new_pic.save(config.file_path + now + '_total.jpg')
-    #try:
-    #       new_pic.save('/home/pi/photobooth/backups/' + now + '_total.jpg')
-    #except:
-    #       print "Flash drive not found"
 
 def tweet_pics(jpg_group):
     now = jpg_group
     twitter_photo = open(config.file_path + now + '_total.jpg','rb')
     twitter_api.update_status_with_media(media=twitter_photo, status='#RPiBooth')
+
 
 def display_pics(jpg_group):
     # this section is an unbelievable nasty hack - for some reason Pygame
@@ -242,7 +220,7 @@ def display_pics(jpg_group):
     for i in range(0, replay_cycles): #show pics a few times
         for i in range(1, total_pics+1): #show each pic
             filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
-            show_image(filename);
+            show_image(filename)
             time.sleep(replay_delay) # pause
 
 def pics_backup(now):
@@ -255,25 +233,23 @@ def pics_backup(now):
     shutil.copy('/home/pi/photobooth/pics/' + now + '_total.jpg', '/media/backup/pics/')
 
 # define the photo taking function for when the big button is pressed
+
+
 def start_photobooth():
 
     ################################# Begin Step 1 #################################
     show_image(real_path + "/assets/blank.png")
     print "Get Ready"
-    GPIO.output(led2_pin,True);
+    GPIO.output(led2_pin,True)
     show_image(real_path + "/assets/instructions.png")
     sleep(prep_delay)
     #GPIO.output(led2_pin,False)
 
     show_image(real_path + "/assets/blank.png")
-
     camera = picamera.PiCamera()
-    pixel_width = 800  #1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
-    #pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
-    pixel_height = 480  #666
     camera.resolution = (pixel_width, pixel_height)
-    camera.vflip = False
-    camera.hflip = False
+    camera.vflip = camera_vflip
+    camera.hflip = camera_hflip
     camera.start_preview()
 
     #sleep(2) #warm up camera
@@ -306,7 +282,7 @@ def start_photobooth():
         show_image(real_path + "/assets/processing.png")
     GPIO.output(led2_pin,True) #turn on the LED
 
-    graphicsmagick = "gm convert -size 500x333 -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
+    graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
     os.system(graphicsmagick) #make the .gif
     #im = Image.open(config.file_path + now + "-01.jpg")
     #im.save(config.file_path + now + "-01.gif")
@@ -328,12 +304,6 @@ def start_photobooth():
                     print('Something went wrong. Could not write file.')
                     sys.exit(0) # quit Python
 
-    #Make Mosaic
-    try:
-        create_mosaic(now)
-    except Exception, e:
-        tb = sys.exc_info()[2]
-        traceback.print_exception(e.__class__, e, tb)
 
     ########################### Begin Step 4 #################################
 
@@ -343,23 +313,6 @@ def start_photobooth():
     except Exception, e:
         tb = sys.exc_info()[2]
         traceback.print_exception(e.__class__, e, tb)
-
-    printflag = True
-    tweetflag = True
-    #check for tweeting or printing
-    for s in sys.argv:
-        if (s == "p"):
-            printflag = True
-        if (s == "t"):
-            tweetflag = True
-    #PRINT MOSAIC if flag is set
-    if(printer_switch == 0):
-        if(printflag):
-            try:
-                print_pics(now)
-            except Exception, e:
-                tb = sys.exc_info()[2]
-                traceback.print_exception(e.__class__, e, tb)
 
     # TWEET PICS if flag is set
     if(tweetflag):
@@ -379,7 +332,7 @@ def start_photobooth():
 
     time.sleep(restart_delay)
 
-    show_image(real_path + "/assets/intro.png");
+    show_image(real_path + "/assets/intro.png")
 
 ####################
 ### Main Program ###
@@ -421,21 +374,18 @@ for f in files:
 
 print "Photo booth app running..."
 #GPIO.output(led1_pin,True); #light up the lights to show the app is running
-GPIO.output(led2_pin,True);
+GPIO.output(led2_pin,True)
 #GPIO.output(led3_pin,True);
 #GPIO.output(led4_pin,True);
 time.sleep(3)
 #GPIO.output(led1_pin,False); #turn off the lights
-GPIO.output(led2_pin,False);
+GPIO.output(led2_pin,False)
 #GPIO.output(led3_pin,False);
 #GPIO.output(led4_pin,False);
 #GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth)
 
-show_image(real_path + "/assets/intro.png");
-
-if(GPIO.input(button2_pin) == 1):
-    printer_switch = True
+show_image(real_path + "/assets/intro.png")
 
 try:
     while True:
