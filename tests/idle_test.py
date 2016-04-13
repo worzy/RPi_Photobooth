@@ -40,6 +40,8 @@ try:
             print "do idle stuff"
             idle_stuff()
             tstart = tcurrent
+        else:
+            time.sleep(.1)
 
 except KeyboardInterrupt:
     print "stopping now"
