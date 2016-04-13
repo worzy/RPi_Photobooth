@@ -26,7 +26,7 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
 fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
-
+real_path = os.path.dirname(os.path.realpath(__file__))
 ########################
 ### Camera Config ###
 ########################
@@ -71,7 +71,7 @@ replay_cycles = 1  # how many times to show each photo on-screen after taking
 ########################
 
 test_server = 'www.google.com'
-real_path = os.path.dirname(os.path.realpath(__file__))
+
 
 #setup the twitter api client
 twitter_api = Twython(
@@ -269,21 +269,21 @@ def start_photobooth():
     camera.hflip = camera_hflip
     camera.start_preview()
 
-    #sleep(2) #warm up camera
+    #sleep(2) # warm up camera
 
     ################################# Begin Step 2 #################################
     print "Taking pics"
-    now = time.strftime("%Y%m%d%H%M%S") #get the current date and time for the start of the filename
-    try: #take the photos
+    now = time.strftime("%Y%m%d%H%M%S") # get the current date and time for the start of the filename
+    try: # take the photos
         #for i, filename in enumerate(camera.capture_continuous(config.file_path + now + '-' + '{counter:02d}.jpg')):
         for i in range(0, total_pics):
             countdown(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
             camera.capture(filename)
-            GPIO.output(led2_pin,True) #turn on the LED
+            GPIO.output(led2_pin,True) # turn on the LED
             print(filename)
-            sleep(0.25) #pause the LED on for just a bit
-            GPIO.output(led2_pin,False) #turn off the LED
+            sleep(0.25) # pause the LED on for just a bit
+            GPIO.output(led2_pin,False) # turn off the LED
             sleep(capture_delay) # pause in-between shots
             if i == total_pics-1:
                 break
@@ -297,14 +297,14 @@ def start_photobooth():
         show_image(real_path + "/assets/uploading.png")
     else:
         show_image(real_path + "/assets/processing.png")
-    GPIO.output(led2_pin,True) #turn on the LED
+    GPIO.output(led2_pin,True) # turn on the LED
 
     graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
-    os.system(graphicsmagick) #make the .gif
+    os.system(graphicsmagick) # make the .gif
 
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
-        print "Uploading to tumblr. Please check RPiBooth.com soon."
-        connected = is_connected() #check to see if you have an internet connection
+        print "Uploading to twitter Please check @ClarlPhoto soon."
+        connected = is_connected() # check to see if you have an internet connection
         while connected:
             try:
                 tweet_pics(now) # tweet pictures
@@ -312,7 +312,7 @@ def start_photobooth():
                 break
             except ValueError:
                 print "Oops. No internect connection. Upload later."
-                try: #make a text file as a note to upload the .gif later
+                try: # make a text file as a note to upload the .gif later
                     file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
                     file.close()
                 except:
@@ -341,24 +341,28 @@ def start_photobooth():
 
     show_image(real_path + "/assets/intro.png")
 
+
+########################################################################################################################
+
 ####################
 ### Main Program ###
 ####################
 
+### GPIO SETUP ###
+
 # when a falling edge is detected on button2_pin and button3_pin, regardless of whatever
 # else is happening in the program, their function will be run
+
+# Shut down Pi
 #GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
-#choose one of the two following lines to be un-commented
+# Button to close python
 GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=300) #use third button to exit python. Good while developing
 
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
 
-#Photobooth callback
+# Start Photobooth
 GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=300) #button to start photobooth
-
-
-
 
 # Check which frame buffer drivers are available
 # Start with fbcon since directfb hangs with composite output
@@ -396,10 +400,12 @@ time.sleep(3)
 GPIO.output(led2_pin,False)
 #GPIO.output(led3_pin,False);
 #GPIO.output(led4_pin,False);
-#GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
-#GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth)
+
 
 show_image(real_path + "/assets/intro.png")
+
+
+#
 
 try:
     while True:
@@ -410,5 +416,5 @@ finally:
     print "im done now"
     cleanup()
 
-cleanup() #cleanup on normal exit
+cleanup() # cleanup on normal exit
 print "Photobooth is done"
