@@ -9,24 +9,23 @@ import time
 import traceback
 from time import sleep
 import RPi.GPIO as GPIO #using physical pin numbering change in future?
-import picamera # http://picamera.readthedocs.org/en/release-1.4/install2.html
-import atexit
-import sys, getopt
+import picamera   # http://picamera.readthedocs.org/en/release-1.4/install2.html
+import sys
 import socket
-import pygame
-#import cups
-from PIL import Image, ImageDraw, ImageFont
-from twython import Twython
+import pygame #pygame for displaying images
 import config
 import shutil
-from signal import alarm, signal, SIGALRM, SIGKILL
+import random #for choosing random status update
+from PIL import Image, ImageDraw, ImageFont # for creating mosaics and other basic image things. use Pillow implementation
+from twython import Twython # twitter library
+from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard interrupt thing for the pygame
 
 ########################
 ### System Config ###
 ########################
-post_online = 1 # default 1. Change to 0 if you don't want to upload pics.
-backup_pics = 1 # backup pics = 1, no backup, change to 0
-fullscreen =0 # set pygame to be fullscreen or not - useful for debugging
+post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
+backup_pics = 1  # backup pics = 1, no backup, change to 0
+fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
 
 ########################
 ### Camera Config ###
@@ -48,8 +47,8 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ########################
 ### Gif Config ###
 ########################
-gif_delay = 50 # How much time between frames in the animated gif
-gif_width=640
+gif_delay = 50  # How much time between frames in the animated gif
+gif_width=640  #dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
 gif_height=360
 
 
@@ -57,14 +56,14 @@ gif_height=360
 ### Monitor Config ###
 ########################
 font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
-monitor_w = 1024 #1024 # this is res of makibes 7" screen
-monitor_h = 600 #600
-transform_x = 640 #640 # how wide to scale the jpg when replaying
-transfrom_y = 480 #480 # how high to scale the jpg when replaying
-offset_x = 10 # how far off to left corner to display photos
-offset_y = 0 # how far off to left corner to display photos
-replay_delay = 1 # how much to wait in-between showing pics on-screen after taking
-replay_cycles = 1 # how many times to show each photo on-screen after taking
+monitor_w = 1024  #1024 # this is res of makibes 7" screen
+monitor_h = 600  #600
+transform_x = 640  #640 # how wide to scale the jpg when replaying
+transfrom_y = 480  #480 # how high to scale the jpg when replaying
+offset_x = 10  # how far off to left corner to display photos
+offset_y = 0  # how far off to left corner to display photos
+replay_delay = 1  # how much to wait in-between showing pics on-screen after taking
+replay_cycles = 1  # how many times to show each photo on-screen after taking
 
 
 ########################
@@ -77,29 +76,39 @@ real_path = os.path.dirname(os.path.realpath(__file__))
 #setup the twitter api client
 twitter_api = Twython(
     config.twitter_CONSUMER_KEY,
-        config.twitter_CONSUMER_SECRET,
-        config.twitter_ACCESS_KEY,
-        config.twitter_ACCESS_SECRET,
+    config.twitter_CONSUMER_SECRET,
+    config.twitter_ACCESS_KEY,
+    config.twitter_ACCESS_SECRET,
 )
+
+hashtags = "#Clarl2016"
+
+statuses = [
+    "Beep Boop! I was programmed to love!",
+    "Weddings are fun! Beep Boop!",
+    "Beep Boop! A memento of the day!",
+    "Don't they look great!?"
+]
+
 
 ####################
 ### GPIO Config ####
 ####################
-led1_pin = 16 # LED 1 #15
-led2_pin = 10 # LED 2 #19
-led3_pin = 21 # LED 3 #21
-led4_pin = 5 # LED 4 #23
-button1_pin = 23 # pin for the big red button
-button2_pin = 4 # pin for printer switch
-button3_pin = 17 # pin for button to end the program, but not shutdown the pi
+led1_pin = 16  # LED 1 #15
+led2_pin = 10  # LED 2 #19
+led3_pin = 21  # LED 3 #21
+led4_pin = 5   # LED 4 #23
+button1_pin = 23  # pin for the big red button
+button2_pin = 4   # pin for printer switch
+button3_pin = 17  # pin for button to end the program, but not shutdown the pi
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(led1_pin,GPIO.OUT) # LED 1
-GPIO.setup(led2_pin,GPIO.OUT) # LED 2
-GPIO.setup(led3_pin,GPIO.OUT) # LED 3
-GPIO.setup(led4_pin,GPIO.OUT) # LED 4
-GPIO.setup(button1_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # falling edge detection on button 1
-GPIO.setup(button2_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # falling edge detection on button 2
-GPIO.setup(button3_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # falling edge detection on button 3
+GPIO.setup(led1_pin,GPIO.OUT)  # LED 1
+GPIO.setup(led2_pin,GPIO.OUT)  # LED 2
+GPIO.setup(led3_pin,GPIO.OUT)  # LED 3
+GPIO.setup(led4_pin,GPIO.OUT)  # LED 4
+GPIO.setup(button1_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 1
+GPIO.setup(button2_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 2
+GPIO.setup(button3_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 3
 GPIO.output(led1_pin,False)
 GPIO.output(led2_pin,False)
 GPIO.output(led3_pin,False)
@@ -116,7 +125,7 @@ def cleanup():
     #atexit.register(cleanup)
 
 
-def shut_it_down(channel):
+def shut_it_down():
     print "Shutting down..."
     #GPIO.output(led1_pin,True)
     GPIO.output(led2_pin,True)
@@ -125,7 +134,7 @@ def shut_it_down(channel):
     os.system("sudo halt")
 
 
-def exit_photobooth(channel):
+def exit_photobooth():
     print "Photo booth app ended. RPi still running"
     #GPIO.output(led1_pin,True)
     time.sleep(3)
@@ -182,7 +191,6 @@ def countdown(camera):
         else:
             overlay_renderer.update(img.tostring())
         sleep(1)
-
     img = Image.new("RGB", (monitor_w, monitor_h))
     draw = ImageDraw.Draw(img)
     draw.text((monitor_w/2,monitor_h/2), " ", (255, 255, 255), font=font)
@@ -191,17 +199,25 @@ def countdown(camera):
 
 def show_image(image_path):
     screen = init_pygame()
-    img=pygame.image.load(image_path)
+    img = pygame.image.load(image_path)
     img = pygame.transform.scale(img,(transform_x,transfrom_y))
     screen.blit(img,(offset_x,offset_y))
     pygame.display.flip()
 
 
 def tweet_pics(jpg_group):
+    # get filename for this gorup of photos
     now = jpg_group
-    twitter_photo = open(config.file_path + now + '_total.jpg','rb')
-    twitter_api.update_status_with_media(media=twitter_photo, status='#RPiBooth')
+    fname = config.file_path + now + '.gif'
+    # choose new status from list and at the hashtags
+    status_choice = random.choice(statuses)
+    status_total = status_choice + " " + hashtags
 
+    print "Tweeting: " + fname + " with status : " + status_total
+    twitter_photo = open(fname, 'rb')  # open file
+    response = twitter_api.upload_media(media=twitter_photo)  # upload to twitter
+    # update status with image and new status
+    twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
 
 def display_pics(jpg_group):
     # this section is an unbelievable nasty hack - for some reason Pygame
@@ -222,6 +238,7 @@ def display_pics(jpg_group):
             filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
             show_image(filename)
             time.sleep(replay_delay) # pause
+
 
 def pics_backup(now):
     print "Backing Up Photos"
@@ -284,16 +301,14 @@ def start_photobooth():
 
     graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
     os.system(graphicsmagick) #make the .gif
-    #im = Image.open(config.file_path + now + "-01.jpg")
-    #im.save(config.file_path + now + "-01.gif")
 
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to tumblr. Please check RPiBooth.com soon."
         connected = is_connected() #check to see if you have an internet connection
         while connected:
             try:
-                file_to_upload = config.file_path + now + ".gif"
-                client.create_photo(config.tumblr_blog, state="published", tags=["RPiBooth", "gif"], data=file_to_upload)
+                tweet_pics(now) # tweet pictures
+                pics_backup(now) # backup pictures into folder
                 break
             except ValueError:
                 print "Oops. No internect connection. Upload later."
@@ -313,14 +328,6 @@ def start_photobooth():
     except Exception, e:
         tb = sys.exc_info()[2]
         traceback.print_exception(e.__class__, e, tb)
-
-    # TWEET PICS if flag is set
-    if(tweetflag):
-        try:
-            pics_backup(now)
-        except Exception, e:
-            tb = sys.exc_info()[2]
-            traceback.print_exception(e.__class__, e, tb)
 
     pygame.quit()
     print "Done"
@@ -343,8 +350,14 @@ def start_photobooth():
 #GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
 #choose one of the two following lines to be un-commented
-GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=100) #use third button to exit python. Good while developing
+GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=300) #use third button to exit python. Good while developing
+
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
+
+#Photobooth callback
+GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=300) #button to start photobooth
+
+
 
 
 # Check which frame buffer drivers are available
@@ -367,18 +380,19 @@ if not found:
     raise Exception('No suitable video driver found!')
 
 
+print "Deleting old files"
 # delete files in folder on startup
 files = glob.glob(config.file_path + '*')
 for f in files:
     os.remove(f)
 
 print "Photo booth app running..."
-#GPIO.output(led1_pin,True); #light up the lights to show the app is running
+#GPIO.output(led1_pin,True); # light up the lights to show the app is running
 GPIO.output(led2_pin,True)
 #GPIO.output(led3_pin,True);
 #GPIO.output(led4_pin,True);
 time.sleep(3)
-#GPIO.output(led1_pin,False); #turn off the lights
+#GPIO.output(led1_pin,False); # turn off the lights
 GPIO.output(led2_pin,False)
 #GPIO.output(led3_pin,False);
 #GPIO.output(led4_pin,False);
@@ -393,4 +407,8 @@ try:
         time.sleep(0.2) #debounce
         start_photobooth()
 finally:
+    print "im done now"
     cleanup()
+
+cleanup() #cleanup on normal exit
+print "Photobooth is done"
