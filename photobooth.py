@@ -8,6 +8,7 @@ import glob
 import time
 import traceback
 from time import sleep
+import atexit
 import RPi.GPIO as GPIO #using physical pin numbering change in future?
 import picamera   # http://picamera.readthedocs.org/en/release-1.4/install2.html
 import sys
@@ -26,7 +27,8 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
 fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
-real_path = os.path.dirname(os.path.realpath(__file__))
+real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
+idle_time = 1000 # time in seconds to wait to idle stuff
 ########################
 ### Camera Config ###
 ########################
@@ -101,7 +103,8 @@ led4_pin = 5   # LED 4 #23
 button1_pin = 23  # pin for the big red button
 button2_pin = 4   # pin for printer switch
 button3_pin = 17  # pin for button to end the program, but not shutdown the pi
-GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.BCM) # use the normal wiring numbering
+GPIO.setwarnings(False) # ignore warnings if cleanup didnt run somehow
 GPIO.setup(led1_pin,GPIO.OUT)  # LED 1
 GPIO.setup(led2_pin,GPIO.OUT)  # LED 2
 GPIO.setup(led3_pin,GPIO.OUT)  # LED 3
@@ -109,7 +112,7 @@ GPIO.setup(led4_pin,GPIO.OUT)  # LED 4
 GPIO.setup(button1_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 1
 GPIO.setup(button2_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 2
 GPIO.setup(button3_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 3
-GPIO.output(led1_pin,False)
+GPIO.output(led1_pin,False) # set all low
 GPIO.output(led2_pin,False)
 GPIO.output(led3_pin,False)
 GPIO.output(led4_pin,False)
@@ -122,6 +125,7 @@ GPIO.output(led4_pin,False)
 def cleanup():
     print('Ended abruptly')
     GPIO.cleanup()
+    pygame.quit()
     #atexit.register(cleanup)
 
 
@@ -167,10 +171,19 @@ def is_connected():
         pass
     return False
 
+def idle_stuff():
+    connected = is_connected()
+
+    if connected:
+        print "uploading missing files"
+    else:
+        print "not connected :("
+
 
 def init_pygame():
     pygame.init()
-    size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    #size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    size= [monitor_w,monitor_h]
     pygame.display.set_caption('Photo Booth Pics')
     pygame.mouse.set_visible(False) #hide the mouse cursor
     #return pygame.display.set_mode(size, pygame.FULLSCREEN)
@@ -220,19 +233,7 @@ def tweet_pics(jpg_group):
     twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
 
 def display_pics(jpg_group):
-    # this section is an unbelievable nasty hack - for some reason Pygame
-    # needs a keyboardinterrupt to initialise in some limited circs (second time running)
-    class Alarm(Exception):
-        pass
-    def alarm_handler(signum, frame):
-        raise Alarm
-    signal(SIGALRM, alarm_handler)
-    alarm(3)
-    try:
-        screen = init_pygame()
-        alarm(0)
-    except Alarm:
-        raise KeyboardInterrupt
+    screen = init_pygame()
     for i in range(0, replay_cycles): #show pics a few times
         for i in range(1, total_pics+1): #show each pic
             filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
@@ -241,18 +242,18 @@ def display_pics(jpg_group):
 
 
 def pics_backup(now):
-    print "Backing Up Photos"
-    shutil.copy('/home/pi/photobooth/pics/' + now + '-01.jpg', '/media/backup/pics/')
-    shutil.copy('/home/pi/photobooth/pics/' + now + '-02.jpg', '/media/backup/pics/')
-    shutil.copy('/home/pi/photobooth/pics/' + now + '-03.jpg', '/media/backup/pics/')
-    shutil.copy('/home/pi/photobooth/pics/' + now + '-04.jpg', '/media/backup/pics/')
-    shutil.copy('/home/pi/photobooth/pics/' + now + '.gif', '/media/backup/pics/')
-    shutil.copy('/home/pi/photobooth/pics/' + now + '_total.jpg', '/media/backup/pics/')
+    print "Backing Up Photos" + now
+    shutil.copy(config.file_path + now + '-01.jpg', config.backup_path)
+    shutil.copy(config.file_path + now + '-02.jpg', config.backup_path)
+    shutil.copy(config.file_path  + now + '-03.jpg', config.backup_path)
+    shutil.copy(config.file_path  + now + '-04.jpg', config.backup_path)
+    shutil.copy(config.file_path  + now + '.gif', config.backup_path)
+    #shutil.copy(config.file_path  + now + '_total.jpg', config.backup_path)
 
 # define the photo taking function for when the big button is pressed
 
 
-def start_photobooth():
+def start_photobooth(self):
 
     ################################# Begin Step 1 #################################
     show_image(real_path + "/assets/blank.png")
@@ -277,7 +278,7 @@ def start_photobooth():
     try: # take the photos
         #for i, filename in enumerate(camera.capture_continuous(config.file_path + now + '-' + '{counter:02d}.jpg')):
         for i in range(0, total_pics):
-            countdown(camera)
+            #countdown(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
             camera.capture(filename)
             GPIO.output(led2_pin,True) # turn on the LED
@@ -297,21 +298,27 @@ def start_photobooth():
         show_image(real_path + "/assets/uploading.png")
     else:
         show_image(real_path + "/assets/processing.png")
+        
     GPIO.output(led2_pin,True) # turn on the LED
-
+    # prepare the gif conversion string
     graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
     os.system(graphicsmagick) # make the .gif
+
+
+### HERE WE NEED TO CHECK INTERNET BEFORE HAND!!!
+
 
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to twitter Please check @ClarlPhoto soon."
         connected = is_connected() # check to see if you have an internet connection
         while connected:
             try:
+                print "We have internet. Uploading now"
                 tweet_pics(now) # tweet pictures
                 pics_backup(now) # backup pictures into folder
                 break
             except ValueError:
-                print "Oops. No internet connection. Upload later."
+                print "Oops. No internect connection. Upload later."
                 try: # make a text file as a note to upload the .gif later
                     file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
                     file.close()
@@ -330,8 +337,10 @@ def start_photobooth():
         traceback.print_exception(e.__class__, e, tb)
 
     pygame.quit()
-    print "Done"
+    print "All Photobooth stuff Done"
     GPIO.output(led4_pin,False) #turn off the LED
+
+    
     if post_online:
         show_image(real_path + "/assets/finished_connected.png")
     else:
@@ -348,6 +357,9 @@ def start_photobooth():
 ### Main Program ###
 ####################
 
+
+atexit.register(cleanup)
+
 ### GPIO SETUP ###
 
 # when a falling edge is detected on button2_pin and button3_pin, regardless of whatever
@@ -357,12 +369,12 @@ def start_photobooth():
 #GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
 # Button to close python
-GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=300) #use third button to exit python. Good while developing
+GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=300) #use third button to exit python. Good while developing
 
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
 
 # Start Photobooth
-GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=300) #button to start photobooth
+GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=300) #button to start photobooth
 
 # Check which frame buffer drivers are available
 # Start with fbcon since directfb hangs with composite output
@@ -404,17 +416,28 @@ GPIO.output(led2_pin,False)
 
 show_image(real_path + "/assets/intro.png")
 
-
-#
+tstart = time.time()
 
 try:
     while True:
-        GPIO.wait_for_edge(button1_pin, GPIO.FALLING)
-        time.sleep(0.2) #debounce
-        start_photobooth()
+        tcurrent = time.time()
+
+        if (tcurrent - tstart) > idle_time:
+            print "do idle stuff"
+            #idle_stuff()
+            tstart = tcurrent
+        else:
+            time.sleep(.1)
+
 finally:
-    print "im done now"
     cleanup()
+    print "finally bit"
+
+#except KeyboardInterrupt:
+#    print "Interupt keyboard"
+#    cleanup()
 
 cleanup() # cleanup on normal exit
-print "Photobooth is done"
+
+
+    
