@@ -311,7 +311,7 @@ def start_photobooth():
                 pics_backup(now) # backup pictures into folder
                 break
             except ValueError:
-                print "Oops. No internect connection. Upload later."
+                print "Oops. No internet connection. Upload later."
                 try: # make a text file as a note to upload the .gif later
                     file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
                     file.close()
