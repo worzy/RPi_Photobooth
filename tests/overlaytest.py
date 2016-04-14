@@ -2,7 +2,6 @@ import time
 import picamera
 import config
 import os
-import os
 from PIL import Image, ImageDraw
 
 pixel_width = 1296  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
@@ -39,6 +38,8 @@ o = camera.add_overlay(pad.tostring(), size=img.size)
 o.alpha = 128
 o.layer = 3
 
-# Wait indefinitely until the user terminates the script
-while True:
-    sleep(1)
+
+time.sleep(3)
+
+camera.stop_preview()
+camera.close()

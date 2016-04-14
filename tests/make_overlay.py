@@ -1,15 +1,18 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import sys
 
 im = Image.open("overlaytext.png")
 
-draw = ImageDraw.Draw(im)
-draw.line((0, 0) + im.size, fill=128)
-draw.line((0, im.size[1], im.size[0], 0), fill=128)
-del draw
+monitor_w=1920
+monitor_h=1080
 
+fnt = ImageFont.truetype('FreeSerif.ttf', 400)
 
-im.show()
+img = Image.new("RGB", (monitor_w, monitor_h))
+draw = ImageDraw.Draw(img)
+draw.text((monitor_w / 2, monitor_h / 2), "hey", (255, 255, 255), font=fnt)
+
+img.show()
 
 # write to stdout
-im.save("foo.png")
+img.save("foo.png")
