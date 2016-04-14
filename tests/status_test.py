@@ -9,7 +9,8 @@ statuses = [
     "Don't they look great!?",
     "I'm ready for my close up",
     "Smile! You're on Clarl cam!",
-    ""
+    "Say cheese! You're crackers!",
+    "I heart Clarl!"
 ]
 
 status_choice = random.choice(statuses)
