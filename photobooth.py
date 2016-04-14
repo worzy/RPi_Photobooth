@@ -33,9 +33,9 @@ idle_time = 1000 # time in seconds to wait to idle stuff
 ### Camera Config ###
 ########################
 
-pixel_width = 800  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+pixel_width = 1024  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
 # pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
-pixel_height = 480  # 666
+pixel_height = 600  # 666
 
 camera_vflip=False
 camera_hflip=False
@@ -316,7 +316,7 @@ def start_photobooth(self):
 
 ### HERE WE NEED TO CHECK INTERNET BEFORE HAND!!!
 
-    needtobackup = 0
+    needtobackup = 1
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to twitter Please check @ClarlPhoto soon."
         connected = is_connected() # check to see if you have an internet connection
@@ -327,6 +327,8 @@ def start_photobooth(self):
                 print "We have internet. Uploading now"
                 tweet_pics(now) # tweet pictures
                 pics_backup(now) # backup pictures into folder
+                needtobackup=0
+                print "tweeting ok"
                 break
             except ValueError:
                 print "Oops. No internect connection. Upload later."
@@ -389,7 +391,7 @@ GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=exit_photobooth, bounc
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
 
 # Start Photobooth
-GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=300) #button to start photobooth
+GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=500) #button to start photobooth
 
 # Check which frame buffer drivers are available
 # Start with fbcon since directfb hangs with composite output
