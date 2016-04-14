@@ -50,8 +50,8 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ### Gif Config ###
 ########################
 gif_delay = 50  # How much time between frames in the animated gif
-gif_width=640  #dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
-gif_height=360
+gif_width = 640  #dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
+gif_height = 360
 
 
 ########################
@@ -61,7 +61,7 @@ font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSerif.ttf", 20
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
 monitor_h = 600  #600
 transform_x = 640  #640 # how wide to scale the jpg when replaying
-transfrom_y = 480  #480 # how high to scale the jpg when replaying
+transform_y = 480  #480 # how high to scale the jpg when replaying
 offset_x = 10  # how far off to left corner to display photos
 offset_y = 0  # how far off to left corner to display photos
 replay_delay = 1  # how much to wait in-between showing pics on-screen after taking
@@ -175,6 +175,7 @@ def is_connected():
         pass
     return False
 
+
 def idle_stuff():
     connected = is_connected()
 
@@ -185,12 +186,16 @@ def idle_stuff():
 
 
 def init_pygame():
-    pygame.init()
-    #size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
-    size= [monitor_w,monitor_h]
+    pygame.init()  # start the pygame instance
+    # set screen size
+    if fullscreen:
+        size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    else:
+        size = [monitor_w, monitor_h]
+    # more pygame setup
     pygame.display.set_caption('Photo Booth Pics')
-    pygame.mouse.set_visible(False) #hide the mouse cursor
-    #return pygame.display.set_mode(size, pygame.FULLSCREEN)
+    pygame.mouse.set_visible(False)  # hide the mouse cursor
+    # return the pygame object with correct size
     if fullscreen:
         return pygame.display.set_mode(size, pygame.FULLSCREEN)
     else:
@@ -217,7 +222,7 @@ def countdown(camera):
 def show_image(image_path):
     screen = init_pygame()
     img = pygame.image.load(image_path)
-    img = pygame.transform.scale(img,(transform_x,transfrom_y))
+    img = pygame.transform.scale(img, (transform_x,transform_y))
     screen.blit(img,(offset_x,offset_y))
     pygame.display.flip()
 
@@ -229,7 +234,6 @@ def tweet_pics(jpg_group):
     # choose new status from list and at the hashtags
     status_choice = random.choice(statuses)
     status_total = status_choice + " " + hashtags
-
     print "Tweeting: " + fname + " with status : " + status_total
     twitter_photo = open(fname, 'rb')  # open file
     response = twitter_api.upload_media(media=twitter_photo)  # upload to twitter
@@ -239,20 +243,20 @@ def tweet_pics(jpg_group):
 
 def display_pics(jpg_group):
     screen = init_pygame()
-    for i in range(0, replay_cycles): #show pics a few times
-        for i in range(1, total_pics+1): #show each pic
+    for i in range(0, replay_cycles): # show pics a few times
+        for i in range(1, total_pics+1): # show each pic
             filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
             show_image(filename)
-            time.sleep(replay_delay) # pause
+            time.sleep(replay_delay)  #  pause
 
 
 def pics_backup(now):
     print "Backing Up Photos" + now
     shutil.copy(config.file_path + now + '-01.jpg', config.backup_path)
     shutil.copy(config.file_path + now + '-02.jpg', config.backup_path)
-    shutil.copy(config.file_path  + now + '-03.jpg', config.backup_path)
-    shutil.copy(config.file_path  + now + '-04.jpg', config.backup_path)
-    shutil.copy(config.file_path  + now + '.gif', config.backup_path)
+    shutil.copy(config.file_path + now + '-03.jpg', config.backup_path)
+    shutil.copy(config.file_path + now + '-04.jpg', config.backup_path)
+    shutil.copy(config.file_path + now + '.gif', config.backup_path)
     #shutil.copy(config.file_path  + now + '_total.jpg', config.backup_path)
 
 # define the photo taking function for when the big button is pressed
