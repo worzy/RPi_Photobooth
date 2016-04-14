@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import subprocess
 import time
 import picamera
 import config
