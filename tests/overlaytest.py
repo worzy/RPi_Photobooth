@@ -18,7 +18,18 @@ camera.hflip = camera_hflip
 camera.start_preview()
 
 # Load the arbitrarily sized image
-img = Image.open('overlay.png')
+monitor_w=640
+monitor_h=480
+
+fnt = ImageFont.truetype('FreeSerif.ttf', 100)
+
+img = Image.new("RGB", (monitor_w, monitor_h))
+draw = ImageDraw.Draw(img)
+draw.text((monitor_w / 2, monitor_h / 2), "hey", (255, 255, 255), font=fnt)
+
+img.show()
+
+
 # Create an image padded to the required size with
 # mode 'RGB'
 pad = Image.new('RGB', (
@@ -27,6 +38,10 @@ pad = Image.new('RGB', (
 ))
 # Paste the original image into the padded one
 pad.paste(img, (0, 0))
+
+
+pad.show()
+
 
 # Add the overlay with the padded image as the source,
 # but the original image's dimensions
