@@ -12,9 +12,9 @@ file_path = '/home/pi/photobooth/' #where do you want to save the photos
 now = time.strftime("%Y%m%d%H%M%S") #get the current date and time for the start of the filename
 
 
-pixel_width = 800  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+pixel_width = 1296  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
 # pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
-pixel_height = 480  # 666
+pixel_height = 972  # 666
 
 camera_vflip=False
 camera_hflip=False
@@ -26,7 +26,7 @@ restart_delay = 10 # how long to display finished message before beginning a new
 
 gif_delay = 50  # How much time between frames in the animated gif
 gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
-gif_height = 360
+gif_height = 480
 
 camera = picamera.PiCamera()
 camera.resolution = (pixel_width, pixel_height)
