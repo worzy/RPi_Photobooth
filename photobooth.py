@@ -89,7 +89,11 @@ statuses = [
     "Beep Boop! I was programmed to love!",
     "Weddings are fun! Beep Boop!",
     "Beep Boop! A memento of the day!",
-    "Don't they look great!?"
+    "Don't they look great!?",
+    "I'm ready for my close up",
+    "Smile! You're on Clarl cam!",
+    "Say cheese! You're crackers!",
+    "I heart Clarl!"
 ]
 
 
@@ -200,7 +204,7 @@ def countdown(camera):
         draw = ImageDraw.Draw(img)
         draw.text((monitor_w/2,monitor_h/2), str(4-j), (255, 255, 255), font=font)
         if not overlay_renderer:
-            overlay_renderer = camera.add_overlay(img.tostring(),layer=3,size=img.size,alpha=28);
+            overlay_renderer = camera.add_overlay(img.tostring(),layer=3,size=img.size,alpha=28)
         else:
             overlay_renderer.update(img.tostring())
         sleep(1)
@@ -231,6 +235,7 @@ def tweet_pics(jpg_group):
     response = twitter_api.upload_media(media=twitter_photo)  # upload to twitter
     # update status with image and new status
     twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
+
 
 def display_pics(jpg_group):
     screen = init_pygame()
@@ -307,10 +312,12 @@ def start_photobooth(self):
 
 ### HERE WE NEED TO CHECK INTERNET BEFORE HAND!!!
 
-
+    needtobackup = 0
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to twitter Please check @ClarlPhoto soon."
         connected = is_connected() # check to see if you have an internet connection
+        if not connected:
+            needtobackup = 1
         while connected:
             try:
                 print "We have internet. Uploading now"
@@ -319,12 +326,16 @@ def start_photobooth(self):
                 break
             except ValueError:
                 print "Oops. No internect connection. Upload later."
-                try: # make a text file as a note to upload the .gif later
-                    file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
-                    file.close()
-                except:
-                    print('Something went wrong. Could not write file.')
-                    sys.exit(0) # quit Python
+                needtobackup = 1
+
+    if needtobackup:
+        try: # make a text file as a note to upload the .gif later
+            file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
+            file.close()
+        except:
+            print('Something went wrong. Could not write file.')
+            sys.exit(0) # quit Python
+
 
 
     ########################### Begin Step 4 #################################
