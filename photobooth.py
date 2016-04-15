@@ -28,7 +28,9 @@ post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
 fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
-idle_time = 1000 # time in seconds to wait to idle stuff
+idle_time = 10 # time in seconds to wait to idle stuff
+missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
+
 ########################
 ### Camera Config ###
 ########################
@@ -50,14 +52,14 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ### Gif Config ###
 ########################
 gif_delay = 50  # How much time between frames in the animated gif
-gif_width = 640  #dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
+gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
 gif_height = 360
 
 
 ########################
 ### Monitor Config ###
 ########################
-font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
+font = ImageFont.truetype("/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
 monitor_h = 600  #600
 transform_x = 640  #640 # how wide to scale the jpg when replaying
@@ -241,13 +243,14 @@ def tweet_pics(jpg_group):
     twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
 
 
+## DISPLAY PICS MAKES LOADS OF PYGAMES FOR SOME REASON!
 def display_pics(jpg_group):
     screen = init_pygame()
-    for i in range(0, replay_cycles): # show pics a few times
-        for i in range(1, total_pics+1): # show each pic
+    for i in range(0, replay_cycles):  # show pics a few times
+        for i in range(1, total_pics+1):  # show each pic
             filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
             show_image(filename)
-            time.sleep(replay_delay)  #  pause
+            time.sleep(replay_delay)  # pause
 
 
 def pics_backup(now):
@@ -335,7 +338,7 @@ def start_photobooth(self):
                 needtobackup = 1
 
     if needtobackup:
-        try: # make a text file as a note to upload the .gif later
+        try:  # make a text file as a note to upload the .gif later
             file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
             file.close()
         except:
@@ -374,7 +377,7 @@ def start_photobooth(self):
 ### Main Program ###
 ####################
 
-
+# add cleanup command to atexit, to ensure it runs when program stops for whatever reason
 atexit.register(cleanup)
 
 ### GPIO SETUP ###
@@ -456,5 +459,3 @@ finally:
 
 cleanup() # cleanup on normal exit
 
-
-    
