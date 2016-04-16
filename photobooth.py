@@ -132,7 +132,6 @@ def cleanup():
     print('Ended abruptly')
     GPIO.cleanup()
     pygame.quit()
-    #atexit.register(cleanup)
 
 
 def shut_it_down():
@@ -457,5 +456,5 @@ finally:
 #    print "Interupt keyboard"
 #    cleanup()
 
-cleanup() # cleanup on normal exit
+cleanup()  # cleanup on normal exit
 
