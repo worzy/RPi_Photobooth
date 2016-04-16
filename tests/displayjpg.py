@@ -10,13 +10,13 @@ total_pics = 4 # number of pics  to be taken
 monitor_w = 800
 monitor_h = 450
 transform_x = 600 #how wide to scale the jpg when replaying
-transfrom_y = 450 #how high to scale the jpg when replaying
+transform_y = 450 #how high to scale the jpg when replaying
 offset_x = 100 #how far off to left corner to display photos
 offset_y = 0 #how far off to left corner to display photos
-replay_delay = .1 # how much to wait in-between showing pics on-screen after taking
+replay_delay = 1 # how much to wait in-between showing pics on-screen after taking
 replay_cycles = 1 # how many times to show each photo on-screen after taking
 
-fullscreen = 0
+fullscreen = 1
 
 
 def init_pygame():
@@ -36,19 +36,21 @@ def init_pygame():
         return pygame.display.set_mode(size)
 
 
-def show_image(img_fname):
-    screen=init_pygame()
+def show_image(img_fname,screen = 0):
+    if not screen:
+        screen = init_pygame()
     img = pygame.image.load(img_fname)
-    img = pygame.transform.scale(img, (transform_x, transfrom_y))
+    img = pygame.transform.scale(img, (transform_x, transform_y))
     screen.blit(img, (offset_x, offset_y))
     pygame.display.flip()  # update the display
 
 
 def display_pics(jpg_group):
+    screen=init_pygame()
     for i in range(0, replay_cycles): #show pics a few times
         for i in range(1, total_pics+1): #show each pic
             filename = jpg_group + "0" + str(i) + ".jpg"
-            show_image(filename)
+            show_image(filename,screen)
             time.sleep(replay_delay) # pause
 try:
     display_pics(now)

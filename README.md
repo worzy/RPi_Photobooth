@@ -14,7 +14,7 @@ This requires:
   - GraphicsMagick -- http://www.graphicsmagick.org/
   - twython -- https://github.com/ryanmcgrath/twython
 
-  Updated as of April 2016 - Latest versions of libaries + APIs
-  Things new in this version:
-   - idle mode which checks if internet is back for any files not uploaded
+Updated as of April 2016 - Latest versions of libaries + APIs
+Things new in this version:
+   - idle mode which checks if internet is back for any files not uploaded.
    - better handling of errors with pygame and picamera - should exit gracefully in more cases now

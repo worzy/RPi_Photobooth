@@ -24,11 +24,12 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 ########################
 ### System Config ###
 ########################
+
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
 fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
-idle_time = 10 # time in seconds to wait to idle stuff
+idle_time = 20 # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
 
 ########################
@@ -51,6 +52,7 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ########################
 ### Gif Config ###
 ########################
+
 gif_delay = 50  # How much time between frames in the animated gif
 gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
 gif_height = 360
@@ -59,7 +61,8 @@ gif_height = 360
 ########################
 ### Monitor Config ###
 ########################
-font = ImageFont.truetype("/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
+
+font = ImageFont.truetype(real_path + "/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
 monitor_h = 600  #600
 transform_x = 640  #640 # how wide to scale the jpg when replaying
@@ -102,6 +105,7 @@ statuses = [
 ####################
 ### GPIO Config ####
 ####################
+
 led1_pin = 16  # LED 1 #15
 led2_pin = 10  # LED 2 #19
 led3_pin = 21  # LED 3 #21
@@ -220,16 +224,19 @@ def countdown(camera):
     overlay_renderer.update(img.tostring())
 
 
-def show_image(image_path):
-    screen = init_pygame()
-    img = pygame.image.load(image_path)
-    img = pygame.transform.scale(img, (transform_x,transform_y))
-    screen.blit(img,(offset_x,offset_y))
-    pygame.display.flip()
+def show_image(img_fname,screen = 0):
+    # displays image onto the screen, making pygame object if necessary
+    # passing screen object is faster and prevents black screen between each one during display_pics
+    if not screen:
+        screen = init_pygame()  # create screen object if not given
+    img = pygame.image.load(img_fname)  # load the image 
+    img = pygame.transform.scale(img, (transform_x, transform_y))  # change to correct size
+    screen.blit(img, (offset_x, offset_y))  # put the image into screen object
+    pygame.display.flip()  # update the display
 
 
 def tweet_pics(jpg_group):
-    # get filename for this gorup of photos
+    # get filename for this group of photos
     now = jpg_group
     fname = config.file_path + now + '.gif'
     # choose new status from list and at the hashtags
@@ -242,17 +249,19 @@ def tweet_pics(jpg_group):
     twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
 
 
-## DISPLAY PICS MAKES LOADS OF PYGAMES FOR SOME REASON!
 def display_pics(jpg_group):
+    # display all of the images with the same name
+    # make a pygame screen object, reusing this each time prevents the black screen between each image
     screen = init_pygame()
     for i in range(0, replay_cycles):  # show pics a few times
         for i in range(1, total_pics+1):  # show each pic
             filename = config.file_path + jpg_group + "-0" + str(i) + ".jpg"
-            show_image(filename)
+            show_image(filename,screen)
             time.sleep(replay_delay)  # pause
 
 
 def pics_backup(now):
+    # copy the pictures into the backup folder
     print "Backing Up Photos" + now
     shutil.copy(config.file_path + now + '-01.jpg', config.backup_path)
     shutil.copy(config.file_path + now + '-02.jpg', config.backup_path)
@@ -393,7 +402,7 @@ GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=exit_photobooth, bounc
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
 
 # Start Photobooth
-GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=500) #button to start photobooth
+GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=1000) #button to start photobooth
 
 # Check which frame buffer drivers are available
 # Start with fbcon since directfb hangs with composite output
