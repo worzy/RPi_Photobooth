@@ -25,7 +25,7 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 ### System Config ###
 ########################
 
-post_online = 0  # default 1. Change to 0 if you don't want to upload pics.
+post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
 fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
@@ -53,7 +53,7 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ### Gif Config ###
 ########################
 
-gif_delay = .25  # How much time between frames in the animated gif - in 100ths of second
+gif_delay = .4  # How much time between frames in the animated gif - in 100ths of second
 gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
 gif_height = 480
 
@@ -63,7 +63,7 @@ gif_height = 480
 
 fnt = ImageFont.truetype(real_path + "/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
 countdown_number = 3  # time to countdown with overlay before starting 3
-countdown_time=.2
+countdown_time=.5
 overlay_alpha = 28  # opacity of overlay during countdown 28
 
 ########################
@@ -154,10 +154,11 @@ def shut_it_down():
     os.system("sudo halt")
 
 
-def exit_photobooth():
+def exit_photobooth(self):
     print "Photo booth app ended. RPi still running"
     #GPIO.output(led1_pin,True)
-    time.sleep(3)
+    time.sleep(1)
+    cleanup()
     raise SystemExit
 
 
@@ -444,7 +445,7 @@ atexit.register(cleanup)
 #GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
 # Button to close python
-GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=300) #use third button to exit python. Good while developing
+GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=2000) #use third button to exit python. Good while developing
 
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
 
