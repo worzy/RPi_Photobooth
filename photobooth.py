@@ -25,9 +25,9 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 ### System Config ###
 ########################
 
-post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
+post_online = 0  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
-fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
+fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
 idle_time = 20 # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
@@ -36,9 +36,9 @@ missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasn
 ### Camera Config ###
 ########################
 
-pixel_width = 1024  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
-# pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
-pixel_height = 600  # 666
+# 2592x1944 1296x972 1296x730 640x480 - use one of these to keep sensor full size
+pixel_width = 2592  #  
+pixel_height = 1944  #
 
 camera_vflip=False
 camera_hflip=False
@@ -53,24 +53,31 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ### Gif Config ###
 ########################
 
-gif_delay = 50  # How much time between frames in the animated gif
+gif_delay = .25  # How much time between frames in the animated gif - in 100ths of second
 gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
-gif_height = 360
+gif_height = 480
 
+########################
+### Countdown Config ###
+########################
+
+fnt = ImageFont.truetype(real_path + "/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
+countdown_number = 3  # time to countdown with overlay before starting 3
+countdown_time=.2
+overlay_alpha = 28  # opacity of overlay during countdown 28
 
 ########################
 ### Monitor Config ###
 ########################
 
-font = ImageFont.truetype(real_path + "/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
 monitor_h = 600  #600
 transform_x = 640  #640 # how wide to scale the jpg when replaying
 transform_y = 480  #480 # how high to scale the jpg when replaying
 offset_x = 10  # how far off to left corner to display photos
 offset_y = 0  # how far off to left corner to display photos
-replay_delay = 1  # how much to wait in-between showing pics on-screen after taking
-replay_cycles = 1  # how many times to show each photo on-screen after taking
+replay_delay = .25  # how much to wait in-between showing pics on-screen after taking
+replay_cycles = 2  # how many times to show each photo on-screen after taking
 
 
 ########################
@@ -207,21 +214,45 @@ def init_pygame():
         return pygame.display.set_mode(size)
 
 
-def countdown(camera):
+def makeoverlay(string_to_display):
+    # create image size of monitor - this can be any arbitrary size
+    img_orig = Image.new("RGB", (monitor_w, monitor_h))  # no inputs mean filled with black
+    # create drawing object
+    draw = ImageDraw.Draw(img_orig)
+    # draw text in image, this should *hopefully* be in the middle of the display
+    draw.text((monitor_w / 2, monitor_h / 2), string_to_display, (255, 255, 255),
+              font=fnt)  # text is white using font defined above
+    # pad the image into the allowed buffer size of multiples of 32 * 16
+    img_padded = Image.new('RGB', (
+        ((img_orig.size[0] + 31) // 32) * 32,
+        ((img_orig.size[1] + 15) // 16) * 16,
+    ))
+    # Paste the original image into the padded one
+    img_padded.paste(img_orig, (0, 0))
+    return img_padded
+
+
+def countdown_overlay(camera):
+    # display countdown as overlay on preview
+
+    # start with no overlay
     overlay_renderer = None
-    for j in range(1,4):
-        img = Image.new("RGB", (monitor_w, monitor_h))
-        draw = ImageDraw.Draw(img)
-        draw.text((monitor_w/2,monitor_h/2), str(4-j), (255, 255, 255), font=font)
+
+    # loop through countdown values (3,2,1) displaying text
+    for j in range(1, countdown_number + 1):
+        # create image with text located in centre - correct size
+        overlay_cur = makeoverlay(str((countdown_number + 1) - j))
+        # overlay this on screen, starting overlay if necessary
         if not overlay_renderer:
-            overlay_renderer = camera.add_overlay(img.tostring(),layer=3,size=img.size,alpha=28)
+            overlay_renderer = camera.add_overlay(overlay_cur.tostring(), layer=3, size=overlay_cur.size, alpha=overlay_alpha)
         else:
-            overlay_renderer.update(img.tostring())
-        sleep(1)
-    img = Image.new("RGB", (monitor_w, monitor_h))
-    draw = ImageDraw.Draw(img)
-    draw.text((monitor_w/2,monitor_h/2), " ", (255, 255, 255), font=font)
-    overlay_renderer.update(img.tostring())
+            overlay_renderer.update(overlay_cur.tostring())
+        time.sleep(countdown_time)
+
+    # when this is finished, hide overlay by making it blank DO WE NEED THIS? CANT WE SET LAYER TO 2 OR REMOVE IT?
+    #overlay_cur = makeoverlay("")
+    #overlay_renderer.update(overlay_cur.tostring())
+    camera.remove_overlay(overlay_renderer)
 
 
 def show_image(img_fname,screen = 0):
@@ -262,13 +293,18 @@ def display_pics(jpg_group):
 
 def pics_backup(now):
     # copy the pictures into the backup folder
-    print "Backing Up Photos" + now
+    print "Backing Up Photos " + now
     shutil.copy(config.file_path + now + '-01.jpg', config.backup_path)
     shutil.copy(config.file_path + now + '-02.jpg', config.backup_path)
     shutil.copy(config.file_path + now + '-03.jpg', config.backup_path)
     shutil.copy(config.file_path + now + '-04.jpg', config.backup_path)
+    #shutil.copy(config.file_path + now + '.gif', config.backup_path)
+    
+
+def gif_backup(now):
+    print "Backing Up gif " + now
     shutil.copy(config.file_path + now + '.gif', config.backup_path)
-    #shutil.copy(config.file_path  + now + '_total.jpg', config.backup_path)
+
 
 # define the photo taking function for when the big button is pressed
 
@@ -276,14 +312,16 @@ def pics_backup(now):
 def start_photobooth(self):
 
     ################################# Begin Step 1 #################################
-    show_image(real_path + "/assets/blank.png")
+    screen=init_pygame()
+    
+    show_image(real_path + "/assets/blank.png",screen)
     print "Get Ready"
     GPIO.output(led2_pin,True)
-    show_image(real_path + "/assets/instructions.png")
+    show_image(real_path + "/assets/instructions.png",screen)
     sleep(prep_delay)
     #GPIO.output(led2_pin,False)
 
-    show_image(real_path + "/assets/blank.png")
+    show_image(real_path + "/assets/blank.png",screen)
     camera = picamera.PiCamera()
     camera.resolution = (pixel_width, pixel_height)
     camera.vflip = camera_vflip
@@ -298,9 +336,10 @@ def start_photobooth(self):
     try: # take the photos
         #for i, filename in enumerate(camera.capture_continuous(config.file_path + now + '-' + '{counter:02d}.jpg')):
         for i in range(0, total_pics):
-            #countdown(camera)
+            countdown_overlay(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
-            camera.capture(filename)
+            camera.capture(filename,resize=(gif_width,gif_height))
+            #camera.capture(filename)
             GPIO.output(led2_pin,True) # turn on the LED
             print(filename)
             sleep(0.25) # pause the LED on for just a bit
@@ -311,13 +350,17 @@ def start_photobooth(self):
     finally:
         camera.stop_preview()
         camera.close()
+        
     ########################### Begin Step 3 #################################
 
     print "Creating an animated gif"
     if post_online:
-        show_image(real_path + "/assets/uploading.png")
+        show_image(real_path + "/assets/uploading.png",screen)
     else:
-        show_image(real_path + "/assets/processing.png")
+        show_image(real_path + "/assets/processing.png",screen)
+
+
+    pics_backup(now) # backup pictures into folder *BEFORE* they get resized
         
     GPIO.output(led2_pin,True) # turn on the LED
     # prepare the gif conversion string
@@ -337,7 +380,7 @@ def start_photobooth(self):
             try:
                 print "We have internet. Uploading now"
                 tweet_pics(now) # tweet pictures
-                pics_backup(now) # backup pictures into folder
+                gif_backup(now)
                 needtobackup=0
                 print "tweeting ok"
                 break
@@ -364,19 +407,23 @@ def start_photobooth(self):
         tb = sys.exc_info()[2]
         traceback.print_exception(e.__class__, e, tb)
 
-    pygame.quit()
+    
     print "All Photobooth stuff Done"
     GPIO.output(led4_pin,False) #turn off the LED
 
     
     if post_online:
-        show_image(real_path + "/assets/finished_connected.png")
+        show_image(real_path + "/assets/finished_connected.png",screen)
     else:
-        show_image(real_path + "/assets/finished_offline.png")
+        show_image(real_path + "/assets/finished_offline.png",screen)
 
     time.sleep(restart_delay)
-
+    pygame.quit() # we are done with this instance of pygame
     show_image(real_path + "/assets/intro.png")
+    
+
+    
+    
 
 
 ########################################################################################################################

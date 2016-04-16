@@ -6,9 +6,9 @@ import sys
 import traceback
 from PIL import Image, ImageDraw, ImageFont
 
-pixel_width = 1600  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+pixel_width = 1824  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
 # pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
-pixel_height = 1200  # 666
+pixel_height = 984  # 666
 
 camera_vflip = False
 camera_hflip = False
@@ -22,14 +22,12 @@ camera.hflip = camera_hflip
 camera.start_preview()
 
 # Load the arbitrarily sized image
-monitor_w = 1600
-monitor_h = 1200
+monitor_w = 1824
+monitor_h = 984
 
 countdown_seconds = 3  # time to countdown with overlay before starting 3
 overlay_alpha = 28  # opacity of overlay during countdown 28
 
-
-## MAKE CREATE OVERLAY A THING HERE
 
 def makeoverlay(string_to_display):
     # create image size of monitor - this can be any arbitrary size
@@ -67,9 +65,9 @@ def countdown_overlay(camera):
         time.sleep(1)
 
     # when this is finished, hide overlay by making it blank DO WE NEED THIS? CANT WE SET LAYER TO 2 OR REMOVE IT?
-    overlay_cur = makeoverlay("")
-    overlay_renderer.update(overlay_cur.tostring())
-
+    #overlay_cur = makeoverlay("")
+    #overlay_renderer.update(overlay_cur.tostring())
+    camera.remove_overlay(overlay_renderer)
 
 try:
     countdown_overlay(camera)
