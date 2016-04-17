@@ -113,26 +113,23 @@ statuses = [
 ### GPIO Config ####
 ####################
 
-led1_pin = 16  # LED 1 #15
-led2_pin = 10  # LED 2 #19
-led3_pin = 21  # LED 3 #21
-led4_pin = 5   # LED 4 #23
-button1_pin = 23  # pin for the big red button
-button2_pin = 4   # pin for printer switch
-button3_pin = 17  # pin for button to end the program, but not shutdown the pi
-GPIO.setmode(GPIO.BCM) # use the normal wiring numbering
-GPIO.setwarnings(False) # ignore warnings if cleanup didnt run somehow
-GPIO.setup(led1_pin,GPIO.OUT)  # LED 1
-GPIO.setup(led2_pin,GPIO.OUT)  # LED 2
-GPIO.setup(led3_pin,GPIO.OUT)  # LED 3
-GPIO.setup(led4_pin,GPIO.OUT)  # LED 4
-GPIO.setup(button1_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 1
-GPIO.setup(button2_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 2
+countdown_led1_pin = 16  # LED 1 #15
+photo_indicator_pin = 10  # LED 2 #19
+processing_indicator_pin = 21  # LED 3 #21
+uploading_indicator_pin = 5   # LED 4 #23
+Start_Photobooth_pin = 23  # pin for the big red button to start the photobooth going
+Exit_Photobooth_pin = 4   # pin for button to end program
+button3_pin = 17  # extra button for something
+GPIO.setmode(GPIO.BCM)  # use the normal wiring numbering
+GPIO.setwarnings(False)  # ignore warnings if cleanup didnt run somehow
+GPIO.setup(countdown_led1_pin, GPIO.OUT)  # LED 1
+GPIO.setup(photo_indicator_pin, GPIO.OUT)  # LED 2
+GPIO.setup(processing_indicator_pin, GPIO.OUT)  # LED 3
+GPIO.setup(uploading_indicator_pin, GPIO.OUT)  # LED 4
+GPIO.setup(Start_Photobooth_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 1
+GPIO.setup(Exit_Photobooth_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 2
 GPIO.setup(button3_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 3
-GPIO.output(led1_pin,False) # set all low
-GPIO.output(led2_pin,False)
-GPIO.output(led3_pin,False)
-GPIO.output(led4_pin,False)
+
 
 #################
 ### Functions ###
@@ -148,10 +145,26 @@ def cleanup():
 def shut_it_down():
     print "Shutting down..."
     #GPIO.output(led1_pin,True)
-    GPIO.output(led2_pin,True)
+    GPIO.output(photo_indicator_pin, True)
     #GPIO.output(led3_pin,True)
     #GPIO.output(led4_pin,True)
     os.system("sudo halt")
+
+
+def led_all_off():
+    # set all low
+    GPIO.output(countdown_led1_pin, False)
+    GPIO.output(photo_indicator_pin, False)
+    GPIO.output(processing_indicator_pin, False)
+    GPIO.output(uploading_indicator_pin, False)
+
+
+def led_all_on():
+    # set all low
+    GPIO.output(countdown_led1_pin, True)
+    GPIO.output(photo_indicator_pin, True)
+    GPIO.output(processing_indicator_pin, True)
+    GPIO.output(uploading_indicator_pin, True)
 
 
 def exit_photobooth(self):
@@ -170,7 +183,7 @@ def clear_pics(foo): #why is this function being passed an arguments?
     #light the lights in series to show completed
     print "Deleted previous pics"
     #GPIO.output(led1_pin,False) #turn off the lights
-    GPIO.output(led2_pin,False)
+    GPIO.output(photo_indicator_pin, False)
     #GPIO.output(led3_pin,False)
     #GPIO.output(led4_pin,False)
 
@@ -317,12 +330,26 @@ def start_photobooth(self):
     
     show_image(real_path + "/assets/blank.png",screen)
     print "Get Ready"
-    GPIO.output(led2_pin,True)
-    show_image(real_path + "/assets/instructions.png",screen)
-    sleep(prep_delay)
-    #GPIO.output(led2_pin,False)
+    GPIO.output(photo_indicator_pin, False)  #turn big led off
 
-    show_image(real_path + "/assets/blank.png",screen)
+    show_image(real_path + "/assets/instructions.png", screen)
+
+    #  flash the leds to
+    led_all_on()
+    sleep(prep_delay/6)
+    led_all_off()
+    sleep(prep_delay/6)
+    led_all_on()
+    sleep(prep_delay/6)
+    led_all_off()
+    sleep(prep_delay/6)
+    led_all_on()
+    sleep(prep_delay/6)
+    led_all_off()
+    sleep(prep_delay/6)
+
+    show_image(real_path + "/assets/blank.png", screen)
+    #setup camera
     camera = picamera.PiCamera()
     camera.resolution = (pixel_width, pixel_height)
     camera.vflip = camera_vflip
@@ -339,13 +366,13 @@ def start_photobooth(self):
         for i in range(0, total_pics):
             countdown_overlay(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
-            camera.capture(filename,resize=(gif_width,gif_height))
+            camera.capture(filename, resize=(gif_width, gif_height))
             #camera.capture(filename)
-            GPIO.output(led2_pin,True) # turn on the LED
+            GPIO.output(photo_indicator_pin, True)  # turn on the LED
             print(filename)
             sleep(0.25) # pause the LED on for just a bit
-            GPIO.output(led2_pin,False) # turn off the LED
-            sleep(capture_delay) # pause in-between shots
+            GPIO.output(photo_indicator_pin, False)  # turn off the LED
+            sleep(capture_delay)  # pause in-between shots
             if i == total_pics-1:
                 break
     finally:
@@ -354,22 +381,22 @@ def start_photobooth(self):
         
     ########################### Begin Step 3 #################################
 
+    GPIO.output(processing_indicator_pin, True)  # turn on the LED
+
     print "Creating an animated gif"
     if post_online:
         show_image(real_path + "/assets/uploading.png",screen)
     else:
         show_image(real_path + "/assets/processing.png",screen)
 
-
-    pics_backup(now) # backup pictures into folder *BEFORE* they get resized
+    pics_backup(now)  # backup pictures into folder *BEFORE* they get resized
         
-    GPIO.output(led2_pin,True) # turn on the LED
+
     # prepare the gif conversion string
     graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
     os.system(graphicsmagick) # make the .gif
 
 
-### HERE WE NEED TO CHECK INTERNET BEFORE HAND!!!
 
     needtobackup = 1
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
@@ -380,7 +407,8 @@ def start_photobooth(self):
         while connected:
             try:
                 print "We have internet. Uploading now"
-                tweet_pics(now) # tweet pictures
+                GPIO.output(uploading_indicator_pin, True)  # turn on the LED
+                tweet_pics(now)  # tweet pictures
                 gif_backup(now)
                 needtobackup=0
                 print "tweeting ok"
@@ -397,7 +425,10 @@ def start_photobooth(self):
             print('Something went wrong. Could not write file.')
             sys.exit(0) # quit Python
 
+    # turn of the leds now
 
+    GPIO.output(processing_indicator_pin, False)  # turn on the LED
+    GPIO.output(uploading_indicator_pin, False)  # turn on the LED
 
     ########################### Begin Step 4 #################################
 
@@ -410,17 +441,17 @@ def start_photobooth(self):
 
     
     print "All Photobooth stuff Done"
-    GPIO.output(led4_pin,False) #turn off the LED
 
-    
+
     if post_online:
         show_image(real_path + "/assets/finished_connected.png",screen)
     else:
         show_image(real_path + "/assets/finished_offline.png",screen)
 
     time.sleep(restart_delay)
-    pygame.quit() # we are done with this instance of pygame
+    pygame.quit()  # we are done with this instance of pygame
     show_image(real_path + "/assets/intro.png")
+    GPIO.output(photo_indicator_pin, True)  # turn on the LED
     
 
     
@@ -436,6 +467,9 @@ def start_photobooth(self):
 # add cleanup command to atexit, to ensure it runs when program stops for whatever reason
 atexit.register(cleanup)
 
+#start with all leds off
+led_all_off()
+
 ### GPIO SETUP ###
 
 # when a falling edge is detected on button2_pin and button3_pin, regardless of whatever
@@ -445,12 +479,10 @@ atexit.register(cleanup)
 #GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
 # Button to close python
-GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=2000) #use third button to exit python. Good while developing
-
-#GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
+GPIO.add_event_detect(Exit_Photobooth_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=2000) #use third button to exit python. Good while developing
 
 # Start Photobooth
-GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=1000) #button to start photobooth
+GPIO.add_event_detect(Start_Photobooth_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=1000) #button to start photobooth
 
 # Check which frame buffer drivers are available
 # Start with fbcon since directfb hangs with composite output
@@ -479,18 +511,18 @@ for f in files:
     os.remove(f)
 
 print "Photo booth app running..."
-#GPIO.output(led1_pin,True); # light up the lights to show the app is running
-GPIO.output(led2_pin,True)
-#GPIO.output(led3_pin,True);
-#GPIO.output(led4_pin,True);
-time.sleep(3)
-#GPIO.output(led1_pin,False); # turn off the lights
-GPIO.output(led2_pin,False)
-#GPIO.output(led3_pin,False);
-#GPIO.output(led4_pin,False);
+# light up the lights to show the app is running
 
+led_all_on()
+
+time.sleep(3)
+
+led_all_off()
 
 show_image(real_path + "/assets/intro.png")
+
+#turn on the LED in the big button
+GPIO.output(photo_indicator_pin, True)
 
 tstart = time.time()
 
