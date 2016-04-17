@@ -27,7 +27,7 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
-fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
+fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
 idle_time = 20 # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
@@ -113,23 +113,18 @@ statuses = [
 ### GPIO Config ####
 ####################
 
-countdown_led1_pin = 16  # LED 1 #15
-photo_indicator_pin = 10  # LED 2 #19
-processing_indicator_pin = 21  # LED 3 #21
-uploading_indicator_pin = 5   # LED 4 #23
+countdown_led1_pin = 17  # LED 1 #15
+photo_indicator_pin = 18  # LED 2 #19
+processing_indicator_pin = 3  # LED 3 #21
+uploading_indicator_pin = 4   # LED 4 #23
 Start_Photobooth_pin = 23  # pin for the big red button to start the photobooth going
-Exit_Photobooth_pin = 4   # pin for button to end program
+Exit_Photobooth_pin = 24   # pin for button to end program
 button3_pin = 17  # extra button for something
 GPIO.setmode(GPIO.BCM)  # use the normal wiring numbering
 GPIO.setwarnings(False)  # ignore warnings if cleanup didnt run somehow
-GPIO.setup(countdown_led1_pin, GPIO.OUT)  # LED 1
-GPIO.setup(photo_indicator_pin, GPIO.OUT)  # LED 2
-GPIO.setup(processing_indicator_pin, GPIO.OUT)  # LED 3
-GPIO.setup(uploading_indicator_pin, GPIO.OUT)  # LED 4
 GPIO.setup(Start_Photobooth_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 1
 GPIO.setup(Exit_Photobooth_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 2
 GPIO.setup(button3_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 3
-
 
 #################
 ### Functions ###
@@ -150,6 +145,11 @@ def shut_it_down():
     #GPIO.output(led4_pin,True)
     os.system("sudo halt")
 
+def led_init():
+    GPIO.setup(countdown_led1_pin, GPIO.OUT)  # LED 1
+    GPIO.setup(photo_indicator_pin, GPIO.OUT)  # LED 2
+    GPIO.setup(processing_indicator_pin, GPIO.OUT)  # LED 3
+    GPIO.setup(uploading_indicator_pin, GPIO.OUT)  # LED 4
 
 def led_all_off():
     # set all low
@@ -169,8 +169,13 @@ def led_all_on():
 
 def exit_photobooth(self):
     print "Photo booth app ended. RPi still running"
-    #GPIO.output(led1_pin,True)
-    time.sleep(1)
+    led_all_on()
+    sleep(1)
+    led_all_off()
+    sleep(1)
+    led_all_on()
+    sleep(1)
+    led_all_off()
     cleanup()
     raise SystemExit
 
@@ -467,6 +472,7 @@ def start_photobooth(self):
 # add cleanup command to atexit, to ensure it runs when program stops for whatever reason
 atexit.register(cleanup)
 
+led_init()
 #start with all leds off
 led_all_off()
 
