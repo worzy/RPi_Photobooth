@@ -13,15 +13,17 @@ file_path = '/home/pi/photobooth/' #where do you want to save the photos
 now = time.strftime("%Y%m%d%H%M%S") #get the current date and time for the start of the filename
 
 
-pixel_width = 2592  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
-pixel_height = 1944  # 666
+pixel_width = 800  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+pixel_height = 600  # 666
 
 # 2592x1944 1296x972 1296x730 640x480
 
 # Load the arbitrarily sized image
-monitor_w = pixel_width
-monitor_h = pixel_height
+monitor_w = 1024
+monitor_h = 600
 
+overlaytext_x = monitor_w / 2 - 100
+overlaytext_y = monitor_h / 4 -50
 
 fnt = ImageFont.truetype('FreeSerif.ttf', 400)
 
@@ -49,7 +51,7 @@ def makeoverlay(string_to_display):
     # create drawing object
     draw = ImageDraw.Draw(img_orig)
     # draw text in image, this should *hopefully* be in the middle of the display
-    draw.text((monitor_w / 2, monitor_h / 2), string_to_display, (255, 255, 255),
+    draw.text((overlaytext_x, overlaytext_y), string_to_display, (255, 255, 255),
               font=fnt)  # text is white using font defined above
     # pad the image into the allowed buffer size of multiples of 32 * 16
     img_padded = Image.new('RGB', (

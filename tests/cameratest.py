@@ -15,7 +15,7 @@ pixel_width = 1296  # 1000 #originally 500: use a smaller size to process faster
 # pixel_height = monitor_h * pixel_width // monitor_w #optimize for monitor size
 pixel_height = 972  # 666
 
-camera_vflip=False
+camera_vflip=True
 camera_hflip=False
 
 total_pics = 4 # number of pics to be taken

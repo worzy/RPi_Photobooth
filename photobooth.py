@@ -27,7 +27,7 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
-fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
+fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
 idle_time = 20 # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
@@ -37,10 +37,10 @@ missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasn
 ########################
 
 # 2592x1944 1296x972 1296x730 640x480 - use one of these to keep sensor full size
-pixel_width = 2592  #  
-pixel_height = 1944  #
+pixel_width = 800  #  
+pixel_height = 600  #
 
-camera_vflip=False
+camera_vflip=True
 camera_hflip=False
 
 total_pics = 4 # number of pics to be taken
@@ -58,6 +58,19 @@ gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum s
 gif_height = 480
 
 ########################
+### Monitor Config ###
+########################
+
+monitor_w = 1024  #1024 # this is res of makibes 7" screen
+monitor_h = 600  #600
+transform_x = 800  #640 # how wide to scale the jpg when replaying
+transform_y = 600  #480 # how high to scale the jpg when replaying
+offset_x = 10  # how far off to left corner to display photos
+offset_y = 0  # how far off to left corner to display photos
+replay_delay = .25  # how much to wait in-between showing pics on-screen after taking
+replay_cycles = 3  # how many times to show each photo on-screen after taking
+
+########################
 ### Countdown Config ###
 ########################
 
@@ -66,19 +79,8 @@ countdown_number = 3  # time to countdown with overlay before starting 3
 countdown_time=.5
 overlay_alpha = 28  # opacity of overlay during countdown 28
 
-########################
-### Monitor Config ###
-########################
-
-monitor_w = 1024  #1024 # this is res of makibes 7" screen
-monitor_h = 600  #600
-transform_x = 640  #640 # how wide to scale the jpg when replaying
-transform_y = 480  #480 # how high to scale the jpg when replaying
-offset_x = 10  # how far off to left corner to display photos
-offset_y = 0  # how far off to left corner to display photos
-replay_delay = .25  # how much to wait in-between showing pics on-screen after taking
-replay_cycles = 2  # how many times to show each photo on-screen after taking
-
+overlaytext_x = monitor_w / 2 #monitor_w / 2 - 100
+overlaytext_y = monitor_h / 2# monitor_h / 4 -50
 
 ########################
 ### Internet Config ###
@@ -239,7 +241,7 @@ def makeoverlay(string_to_display):
     # create drawing object
     draw = ImageDraw.Draw(img_orig)
     # draw text in image, this should *hopefully* be in the middle of the display
-    draw.text((monitor_w / 2, monitor_h / 2), string_to_display, (255, 255, 255),
+    draw.text((overlaytext_x, overlaytext_y), string_to_display, (255, 255, 255),
               font=fnt)  # text is white using font defined above
     # pad the image into the allowed buffer size of multiples of 32 * 16
     img_padded = Image.new('RGB', (
