@@ -6,7 +6,7 @@ import sys
 import traceback
 
 now = "../samplepics/image"
-total_pics = 4 # number of pics  to be taken
+total_pics = 4  # number of pics  to be taken
 monitor_w = 1024
 monitor_h = 600
 #transform_x = 1024 #how wide to scale the jpg when replaying
@@ -36,7 +36,7 @@ def init_pygame():
         return pygame.display.set_mode(size)
 
 
-def show_image(img_fname,screen = 0):
+def show_image(img_fname, screen=0):
     if not screen:
         screen = init_pygame()
     img = pygame.image.load(img_fname)
@@ -44,11 +44,11 @@ def show_image(img_fname,screen = 0):
     img_w = img.get_width()
 
     if img_h == monitor_h and img_w == monitor_w:
-        img = pygame.transform.scale(img)
+        #img = pygame.transform.scale(img)
         offset_x = 0
         offset_y = 0
     else:
-        y_scale_factor = monitor_h/ (1.0 * img_h) # force float
+        y_scale_factor = monitor_h / (1.0 * img_h)  # force float
         transform_y = int(img_h * y_scale_factor)
         transform_x = int(img_w * y_scale_factor)
         offset_x = (monitor_w - transform_x) / 2
@@ -59,13 +59,19 @@ def show_image(img_fname,screen = 0):
 
 
 def display_pics(jpg_group):
-    screen=init_pygame()
-    for i in range(0, replay_cycles): #show pics a few times
-        for i in range(1, total_pics+1): #show each pic
+    screen = init_pygame()
+    for i in range(0, replay_cycles):  # show pics a few times
+        for i in range(1, total_pics+1):  # show each pic
             filename = jpg_group + "0" + str(i) + ".jpg"
             show_image(filename,screen)
             time.sleep(replay_delay) # pause
 try:
+    show_image("./monitor_res_test.png")
+    time.sleep(1)
+    show_image("./photo_res_test.png")
+    time.sleep(1)
+    show_image("./gif_res_test.png")
+    time.sleep(1)
     display_pics(now)
 except Exception, e:
     tb = sys.exc_info()[2]
