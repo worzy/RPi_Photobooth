@@ -37,8 +37,10 @@ missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasn
 ########################
 
 # 2592x1944 1296x972 1296x730 640x480 - use one of these to keep sensor full size
-pixel_width = 800  #  
-pixel_height = 600  #
+# this is 1.25 size of 640x480 - this allows keeps correct aspect ratio but maximises the use of the screen.
+# images resized by gpu when taking picture as its quicker
+pixel_width = 800
+pixel_height = 600
 
 camera_vflip=True
 camera_hflip=False
@@ -53,7 +55,7 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ### Gif Config ###
 ########################
 
-gif_delay = .4  # How much time between frames in the animated gif - in 100ths of second
+gif_delay = 25  # How much time between frames in the animated gif - in 100ths of second
 gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
 gif_height = 480
 
@@ -63,11 +65,11 @@ gif_height = 480
 
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
 monitor_h = 600  #600
-transform_x = 800  #640 # how wide to scale the jpg when replaying
-transform_y = 600  #480 # how high to scale the jpg when replaying
-offset_x = 10  # how far off to left corner to display photos
-offset_y = 0  # how far off to left corner to display photos
-replay_delay = .25  # how much to wait in-between showing pics on-screen after taking
+#transform_x = 800  #640 # how wide to scale the jpg when replaying
+#transform_y = 600  #480 # how high to scale the jpg when replaying
+#offset_x = 10  # how far off to left corner to display photos
+#offset_y = 0  # how far off to left corner to display photos
+replay_delay = (1.0 * gif_delay) / 100  # how much to wait in-between showing pics on-screen after taking
 replay_cycles = 3  # how many times to show each photo on-screen after taking
 
 ########################
@@ -276,14 +278,25 @@ def countdown_overlay(camera):
     camera.remove_overlay(overlay_renderer)
 
 
-def show_image(img_fname,screen = 0):
-    # displays image onto the screen, making pygame object if necessary
-    # passing screen object is faster and prevents black screen between each one during display_pics
+def show_image(img_fname, screen=0):
     if not screen:
-        screen = init_pygame()  # create screen object if not given
-    img = pygame.image.load(img_fname)  # load the image 
-    img = pygame.transform.scale(img, (transform_x, transform_y))  # change to correct size
-    screen.blit(img, (offset_x, offset_y))  # put the image into screen object
+        screen = init_pygame()
+    img = pygame.image.load(img_fname)
+    img_h = img.get_height()
+    img_w = img.get_width()
+
+    if img_h == monitor_h and img_w == monitor_w:
+        #img = pygame.transform.scale(img)
+        offset_x = 0
+        offset_y = 0
+    else:
+        y_scale_factor = monitor_h / (1.0 * img_h)  # force float
+        transform_y = int(img_h * y_scale_factor)
+        transform_x = int(img_w * y_scale_factor)
+        offset_x = (monitor_w - transform_x) / 2
+        offset_y = 0
+        img = pygame.transform.scale(img, (transform_x, transform_y))
+    screen.blit(img, (offset_x, offset_y))
     pygame.display.flip()  # update the display
 
 
@@ -417,7 +430,7 @@ def start_photobooth(self):
                 GPIO.output(uploading_indicator_pin, True)  # turn on the LED
                 tweet_pics(now)  # tweet pictures
                 gif_backup(now)
-                needtobackup=0
+                needtobackup = 0
                 print "tweeting ok"
                 break
             except ValueError:
@@ -430,7 +443,7 @@ def start_photobooth(self):
             file.close()
         except:
             print('Something went wrong. Could not write file.')
-            sys.exit(0) # quit Python
+            #sys.exit(0) # quit Python
 
     # turn of the leds now
 
