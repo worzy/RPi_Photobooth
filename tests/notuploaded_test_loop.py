@@ -46,8 +46,10 @@ def upload_single_missingfile():
     print "found following files : "
     print filesnotuploaded
     numfound = len(filesnotuploaded)
+    print "numfound : " + str(numfound)
     if numfound > 0:
         targetint = random.randint(0,numfound-1)
+        print "targentint : " + str(targetint)
         target_name = os.path.basename(filesnotuploaded[targetint])
         print "current file :" + target_name
         name_split = str.split(target_name, missedfile_appendix)

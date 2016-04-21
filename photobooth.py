@@ -27,10 +27,14 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
-fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
+fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
 idle_time = 20 # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
+
+photobooth_in_use = False
+time_since_last_use =0
+time_gap=1
 
 ########################
 ### Camera Config ###
@@ -42,7 +46,7 @@ missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasn
 pixel_width = 800
 pixel_height = 600
 
-camera_vflip=True
+camera_vflip=False
 camera_hflip=False
 
 total_pics = 4 # number of pics to be taken
@@ -211,11 +215,45 @@ def is_connected():
     return False
 
 
+def upload_single_missingfile():
+    checkstr = config.file_path + "*" + missedfile_appendix + "*"
+    #print "Checking with string :" + checkstr
+    filesnotuploaded = glob.glob(config.file_path + "*" + missedfile_appendix + "*")
+    print "found following files : "
+    print filesnotuploaded
+    numfound = len(filesnotuploaded)
+    print "numfound : " + str(numfound)
+    if numfound > 0:
+        targetint = random.randint(0,numfound-1)
+        print "targentint : " + str(targetint)
+        target_name = os.path.basename(filesnotuploaded[targetint])
+        print "current file :" + target_name
+        name_split = str.split(target_name, missedfile_appendix)
+        filetoupload = name_split[0]
+        if os.path.exists(config.file_path + filetoupload + ".gif"):
+            try:
+                tweet_pics(filetoupload)
+                pics_backup(filetoupload)
+                gif_backup(filetoupload)
+                print "tweeting ok"
+                os.remove(config.file_path + target_name)
+            except Exception, e:
+                tb = sys.exc_info()[2]
+                traceback.print_exception(e.__class__, e, tb)           
+                print "tweeting didnt work, keeping failure flag"
+        else:
+            print "couldnt find gif deleting backupflag"
+            os.remove(photopath + target_name)
+    else:
+        print "no missing uploads found"
+
+
 def idle_stuff():
     connected = is_connected()
 
     if connected:
         print "uploading missing files"
+        upload_single_missingfile()
     else:
         print "not connected :("
 
@@ -342,9 +380,27 @@ def gif_backup(now):
 
 # define the photo taking function for when the big button is pressed
 
+def photobooth_callback(self):
+    global time_since_last_use
+    global photobooth_in_use
+
+    duration = time.time() - time_since_last_use
+
+    if duration > time_gap:
+        if not photobooth_in_use:
+            print "photobooth not in use so we can use it"
+            start_photobooth(self)
+            print "callback done"
+            time_since_last_use=time.time()
+        else:
+            print "photobooth assets already in use, doing nothing"
+            
+
+
 
 def start_photobooth(self):
-
+    global photobooth_in_use
+    photobooth_in_use = True
     ################################# Begin Step 1 #################################
     screen=init_pygame()
     
@@ -467,11 +523,12 @@ def start_photobooth(self):
         show_image(real_path + "/assets/finished_connected.png",screen)
     else:
         show_image(real_path + "/assets/finished_offline.png",screen)
-
+    
     time.sleep(restart_delay)
     pygame.quit()  # we are done with this instance of pygame
     show_image(real_path + "/assets/intro.png")
     GPIO.output(photo_indicator_pin, True)  # turn on the LED
+    photobooth_in_use = False
     
 
     
@@ -503,7 +560,7 @@ led_all_off()
 GPIO.add_event_detect(Exit_Photobooth_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=2000) #use third button to exit python. Good while developing
 
 # Start Photobooth
-GPIO.add_event_detect(Start_Photobooth_pin, GPIO.FALLING, callback=start_photobooth, bouncetime=1000) #button to start photobooth
+GPIO.add_event_detect(Start_Photobooth_pin, GPIO.FALLING, callback=photobooth_callback, bouncetime=300) #button to start photobooth
 
 # Check which frame buffer drivers are available
 # Start with fbcon since directfb hangs with composite output
@@ -550,13 +607,17 @@ tstart = time.time()
 try:
     while True:
         tcurrent = time.time()
+        
+        
 
-        if (tcurrent - tstart) > idle_time:
+        if ((tcurrent - tstart) > idle_time) and not photobooth_in_use:
             print "do idle stuff"
-            #idle_stuff()
+            idle_stuff()
             tstart = tcurrent
         else:
             time.sleep(.1)
+
+                
 
 finally:
     cleanup()
