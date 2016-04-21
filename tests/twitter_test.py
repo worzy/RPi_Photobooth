@@ -1,6 +1,7 @@
 import config
 import random
 from twython import Twython
+import time
 
 # setup the twitter api client
 twitter_api = Twython(
@@ -22,6 +23,8 @@ statuses = [
 print 'hello, I am about to tweet. HERE WE GO'
 
 
+tstart = time.time()
+
 # get filename for this group of photos
 #now = jpg_group
 now = "test"
@@ -32,11 +35,11 @@ status_total = status_choice + " " + hashtags
 
 print "Tweeting: " + fname + " with status : " + status_total
 #twitter_photo = open(fname, 'rb')  # open file
-twitter_photo = open("../samplepics/test.gif", 'rb')
+twitter_photo = open("../samplepics/hedgehog.gif", 'rb')
 response = twitter_api.upload_media(media=twitter_photo)  # upload to twitter
 # update status with image and new status
 twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
 
-
-
 print 'I did it! are you proud of me?'
+
+print 'That took : ' + str(time.time() - tstart)
