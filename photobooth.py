@@ -27,14 +27,14 @@ from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard int
 
 post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
-fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
+fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
 idle_time = 20 # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
 
 photobooth_in_use = False
 time_since_last_use =0
-time_gap=1
+time_gap=1 # debounce time - duration before photos can be taken again
 
 ########################
 ### Camera Config ###
@@ -52,6 +52,9 @@ camera_hflip=False
 total_pics = 4 # number of pics to be taken
 capture_delay = 1 # delay between pics
 prep_delay = 5 # number of seconds at step 1 as users prep to have photo taken
+
+## LED FLASH TIME
+
 restart_delay = 10 # how long to display finished message before beginning a new session
 
 
@@ -69,10 +72,6 @@ gif_height = 480
 
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
 monitor_h = 600  #600
-#transform_x = 800  #640 # how wide to scale the jpg when replaying
-#transform_y = 600  #480 # how high to scale the jpg when replaying
-#offset_x = 10  # how far off to left corner to display photos
-#offset_y = 0  # how far off to left corner to display photos
 replay_delay = (1.0 * gif_delay) / 100  # how much to wait in-between showing pics on-screen after taking
 replay_cycles = 3  # how many times to show each photo on-screen after taking
 
@@ -121,13 +120,25 @@ statuses = [
 ### GPIO Config ####
 ####################
 
-countdown_led1_pin = 17  # LED 1 #15
-photo_indicator_pin = 18  # LED 2 #19
-processing_indicator_pin = 3  # LED 3 #21
-uploading_indicator_pin = 4   # LED 4 #23
+# LED pins
+
+countdown_led1_pin = 2  # 
+countdown_led2_pin = 3  # 
+countdown_led3_pin = 4  #
+
+countdown_array = [ countdown_led1_pin, countdown_led2_pin, countdown_led3_pin]
+
+photo_indicator_pin = 17  # 
+processing_indicator_pin = 22  # 
+uploading_indicator_pin = 27   #
+
+# Button pins
+
 Start_Photobooth_pin = 23  # pin for the big red button to start the photobooth going
 Exit_Photobooth_pin = 24   # pin for button to end program
 button3_pin = 17  # extra button for something
+
+
 GPIO.setmode(GPIO.BCM)  # use the normal wiring numbering
 GPIO.setwarnings(False)  # ignore warnings if cleanup didnt run somehow
 GPIO.setup(Start_Photobooth_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # falling edge detection on button 1
@@ -154,25 +165,31 @@ def shut_it_down():
     os.system("sudo halt")
 
 def led_init():
-    GPIO.setup(countdown_led1_pin, GPIO.OUT)  # LED 1
-    GPIO.setup(photo_indicator_pin, GPIO.OUT)  # LED 2
-    GPIO.setup(processing_indicator_pin, GPIO.OUT)  # LED 3
-    GPIO.setup(uploading_indicator_pin, GPIO.OUT)  # LED 4
+    GPIO.setup(countdown_led1_pin,GPIO.OUT)
+    GPIO.setup(countdown_led2_pin,GPIO.OUT)
+    GPIO.setup(countdown_led3_pin,GPIO.OUT)
+    GPIO.setup(photo_indicator_pin,GPIO.OUT)
+    GPIO.setup(processing_indicator_pin,GPIO.OUT)
+    GPIO.setup(uploading_indicator_pin,GPIO.OUT)
 
 def led_all_off():
     # set all low
-    GPIO.output(countdown_led1_pin, False)
-    GPIO.output(photo_indicator_pin, False)
-    GPIO.output(processing_indicator_pin, False)
-    GPIO.output(uploading_indicator_pin, False)
+    GPIO.output(countdown_led1_pin,0)
+    GPIO.output(countdown_led2_pin,0)
+    GPIO.output(countdown_led3_pin,0)
+    GPIO.output(photo_indicator_pin,0)
+    GPIO.output(processing_indicator_pin,0)
+    GPIO.output(uploading_indicator_pin,0)
 
 
 def led_all_on():
     # set all low
-    GPIO.output(countdown_led1_pin, True)
-    GPIO.output(photo_indicator_pin, True)
-    GPIO.output(processing_indicator_pin, True)
-    GPIO.output(uploading_indicator_pin, True)
+    GPIO.output(countdown_led1_pin,1)
+    GPIO.output(countdown_led2_pin,1)
+    GPIO.output(countdown_led3_pin,1)
+    GPIO.output(photo_indicator_pin,1)
+    GPIO.output(processing_indicator_pin,1)
+    GPIO.output(uploading_indicator_pin,1)
 
 
 def exit_photobooth(self):
@@ -196,7 +213,7 @@ def clear_pics(foo): #why is this function being passed an arguments?
     #light the lights in series to show completed
     print "Deleted previous pics"
     #GPIO.output(led1_pin,False) #turn off the lights
-    GPIO.output(photo_indicator_pin, False)
+    #GPIO.output(photo_indicator_pin, False)
     #GPIO.output(led3_pin,False)
     #GPIO.output(led4_pin,False)
 
@@ -251,7 +268,7 @@ def upload_single_missingfile():
 def idle_stuff():
     connected = is_connected()
 
-    if connected:
+    if connected and post_online:
         print "uploading missing files"
         upload_single_missingfile()
     else:
@@ -308,6 +325,7 @@ def countdown_overlay(camera):
             overlay_renderer = camera.add_overlay(overlay_cur.tostring(), layer=3, size=overlay_cur.size, alpha=overlay_alpha)
         else:
             overlay_renderer.update(overlay_cur.tostring())
+        GPIO.output(countdown_array[j -1], True) 
         time.sleep(countdown_time)
 
     # when this is finished, hide overlay by making it blank DO WE NEED THIS? CANT WE SET LAYER TO 2 OR REMOVE IT?
@@ -406,9 +424,11 @@ def start_photobooth(self):
     
     show_image(real_path + "/assets/blank.png",screen)
     print "Get Ready"
-    GPIO.output(photo_indicator_pin, False)  #turn big led off
+    #GPIO.output(photo_indicator_pin, False)  #turn big led off
 
     show_image(real_path + "/assets/instructions.png", screen)
+
+    
 
     #  flash the leds to
     led_all_on()
@@ -442,12 +462,11 @@ def start_photobooth(self):
         for i in range(0, total_pics):
             countdown_overlay(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
-            camera.capture(filename, resize=(gif_width, gif_height))
-            #camera.capture(filename)
             GPIO.output(photo_indicator_pin, True)  # turn on the LED
+            camera.capture(filename, resize=(gif_width, gif_height))
             print(filename)
             sleep(0.25) # pause the LED on for just a bit
-            GPIO.output(photo_indicator_pin, False)  # turn off the LED
+            led_all_off()
             sleep(capture_delay)  # pause in-between shots
             if i == total_pics-1:
                 break
@@ -527,7 +546,7 @@ def start_photobooth(self):
     time.sleep(restart_delay)
     pygame.quit()  # we are done with this instance of pygame
     show_image(real_path + "/assets/intro.png")
-    GPIO.output(photo_indicator_pin, True)  # turn on the LED
+    #GPIO.output(photo_indicator_pin, True)  # turn on the LED
     photobooth_in_use = False
     
 
@@ -600,7 +619,7 @@ led_all_off()
 show_image(real_path + "/assets/intro.png")
 
 #turn on the LED in the big button
-GPIO.output(photo_indicator_pin, True)
+#GPIO.output(photo_indicator_pin, True)
 
 tstart = time.time()
 
