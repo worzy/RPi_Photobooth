@@ -6,90 +6,91 @@ from time import sleep
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-led_1 = 2
-led_2 = 3
-led_3 = 4
-led_4 = 17
-led_5 = 27
-led_6 = 22
+countdown_led1_pin = 2  # LED 1 #15
+countdown_led2_pin = 3  # LED 1 #15
+countdown_led3_pin = 4  # LED 1 #15
+
+photo_indicator_pin = 17  # LED 2 #19
+processing_indicator_pin = 22  # LED 3 #21
+uploading_indicator_pin = 27   # LED 4 #23
 
 
-GPIO.setup(led_1,GPIO.OUT)
-GPIO.setup(led_2,GPIO.OUT)
-GPIO.setup(led_3,GPIO.OUT)
-GPIO.setup(led_4,GPIO.OUT)
-GPIO.setup(led_5,GPIO.OUT)
-GPIO.setup(led_6,GPIO.OUT)
+GPIO.setup(countdown_led1_pin,GPIO.OUT)
+GPIO.setup(countdown_led2_pin,GPIO.OUT)
+GPIO.setup(countdown_led3_pin,GPIO.OUT)
+GPIO.setup(photo_indicator_pin,GPIO.OUT)
+GPIO.setup(processing_indicator_pin,GPIO.OUT)
+GPIO.setup(uploading_indicator_pin,GPIO.OUT)
 
-GPIO.output(led_1,1)
-GPIO.output(led_2,1)
-GPIO.output(led_3,1)
-GPIO.output(led_4,1)
-GPIO.output(led_5,1)
-GPIO.output(led_6,1)
 
-sleep(1)
-
-GPIO.output(led_1,0)
-GPIO.output(led_2,0)
-GPIO.output(led_3,0)
-GPIO.output(led_4,0)
-GPIO.output(led_5,0)
-GPIO.output(led_6,0)
+GPIO.output(countdown_led1_pin,0)
+GPIO.output(countdown_led2_pin,0)
+GPIO.output(countdown_led3_pin,0)
+GPIO.output(photo_indicator_pin,0)
+GPIO.output(processing_indicator_pin,0)
+GPIO.output(uploading_indicator_pin,0)
 
 sleep(1)
 
-GPIO.output(led_1,1)
-GPIO.output(led_2,1)
-GPIO.output(led_3,1)
-GPIO.output(led_4,1)
-GPIO.output(led_5,1)
-GPIO.output(led_6,1)
+GPIO.output(countdown_led1_pin,1)
+GPIO.output(countdown_led2_pin,0)
+GPIO.output(countdown_led3_pin,0)
+GPIO.output(photo_indicator_pin,0)
+GPIO.output(processing_indicator_pin,0)
+GPIO.output(uploading_indicator_pin,0)
 
 sleep(1)
 
-GPIO.output(led_1,0)
-GPIO.output(led_2,0)
-GPIO.output(led_3,0)
-GPIO.output(led_4,0)
-GPIO.output(led_5,0)
-GPIO.output(led_6,0)
+GPIO.output(countdown_led1_pin,1)
+GPIO.output(countdown_led2_pin,1)
+GPIO.output(countdown_led3_pin,0)
+GPIO.output(photo_indicator_pin,0)
+GPIO.output(processing_indicator_pin,0)
+GPIO.output(uploading_indicator_pin,0)
 
 sleep(1)
 
-GPIO.output(led_1,1)
-GPIO.output(led_2,1)
-GPIO.output(led_3,1)
-GPIO.output(led_4,1)
-GPIO.output(led_5,1)
-GPIO.output(led_6,1)
+GPIO.output(countdown_led1_pin,1)
+GPIO.output(countdown_led2_pin,1)
+GPIO.output(countdown_led3_pin,1)
+GPIO.output(photo_indicator_pin,0)
+GPIO.output(processing_indicator_pin,0)
+GPIO.output(uploading_indicator_pin,0)
 
 sleep(1)
 
-GPIO.output(led_1,0)
-GPIO.output(led_2,0)
-GPIO.output(led_3,0)
-GPIO.output(led_4,0)
-GPIO.output(led_5,0)
-GPIO.output(led_6,0)
+GPIO.output(countdown_led1_pin,1)
+GPIO.output(countdown_led2_pin,1)
+GPIO.output(countdown_led3_pin,1)
+GPIO.output(photo_indicator_pin,1)
+GPIO.output(processing_indicator_pin,0)
+GPIO.output(uploading_indicator_pin,0)
 
 sleep(1)
 
-GPIO.output(led_1,1)
-GPIO.output(led_2,1)
-GPIO.output(led_3,1)
-GPIO.output(led_4,1)
-GPIO.output(led_5,1)
-GPIO.output(led_6,1)
+GPIO.output(countdown_led1_pin,1)
+GPIO.output(countdown_led2_pin,1)
+GPIO.output(countdown_led3_pin,1)
+GPIO.output(photo_indicator_pin,1)
+GPIO.output(processing_indicator_pin,1)
+GPIO.output(uploading_indicator_pin,0)
 
 sleep(1)
 
-GPIO.output(led_1,0)
-GPIO.output(led_2,0)
-GPIO.output(led_3,0)
-GPIO.output(led_4,0)
-GPIO.output(led_5,0)
-GPIO.output(led_6,0)
+GPIO.output(countdown_led1_pin,1)
+GPIO.output(countdown_led2_pin,1)
+GPIO.output(countdown_led3_pin,1)
+GPIO.output(photo_indicator_pin,1)
+GPIO.output(processing_indicator_pin,1)
+GPIO.output(uploading_indicator_pin,1)
 
+sleep(1)
+
+GPIO.output(countdown_led1_pin,0)
+GPIO.output(countdown_led2_pin,0)
+GPIO.output(countdown_led3_pin,0)
+GPIO.output(photo_indicator_pin,0)
+GPIO.output(processing_indicator_pin,0)
+GPIO.output(uploading_indicator_pin,0)
 
 GPIO.cleanup()
