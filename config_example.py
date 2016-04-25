@@ -9,5 +9,6 @@ twitter_CONSUMER_KEY = 'CONSUMER KEY'
 twitter_CONSUMER_SECRET = 'CONSUMER SECRET'
 twitter_ACCESS_KEY = 'ACCESS KEY'
 twitter_ACCESS_SECRET = 'ACCESS SECRET'
+dropbox_TOKEN = 'TOKEN'
 file_path = '/home/pi/photobooth/pics/' # path to save images
 backup_path = '/home/pi/photobooth/backups/' # path to backup images
