@@ -26,7 +26,7 @@ TOKEN = config.dropbox_TOKEN
 
 
 dbx_folder = 'photoboothbackup'
-foldertobackup = '~/test'
+foldertobackup = config.backup_path
 
 
 parser = argparse.ArgumentParser(description='Sync ~/Downloads to Dropbox')

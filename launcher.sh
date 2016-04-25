@@ -1,10 +1,10 @@
 #!/bin/bash
-sleep 5 
+sleep 10 
 echo "startup"
 #cd /
-#cd home/pi/RPi_Photobooth
-#sudo python photobooth.py &
-#sudo python startuptest1.py &
+#cd /home/pi/RPi_Photobooth
+sudo python /home/pi/RPi_Photobooth/photobooth.py | tee /home/pi/RPi_Photobooth/photobooth_log.txt &
+#sudo python startuptest1.py | tee log.txt &
 #sudo python startuptest2.py &
 #cd /
 exit 0
