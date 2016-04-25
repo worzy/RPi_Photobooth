@@ -9,17 +9,17 @@ import time
 import traceback
 from time import sleep
 import atexit
-import RPi.GPIO as GPIO #using physical pin numbering change in future?
+import RPi.GPIO as GPIO  # using physical pin numbering change in future?
 import picamera   # http://picamera.readthedocs.org/en/release-1.4/install2.html
 import sys
 import socket
-import pygame #pygame for displaying images
+import pygame  # pygame for displaying images
 import config
 import shutil
-import random #for choosing random status update
+import random  # for choosing random status update
 from PIL import Image, ImageDraw, ImageFont # for creating mosaics and other basic image things. use Pillow implementation
 from twython import Twython # twitter library
-from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard interrupt thing for the pygame
+# from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard interrupt thing for the pygame
 
 ########################
 ### System Config ###
@@ -29,7 +29,7 @@ post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
 backup_pics = 1  # backup pics = 1, no backup, change to 0
 fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
-idle_time = 20 # time in seconds to wait to idle stuff
+idle_time = 20  # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
 
 photobooth_in_use = False
@@ -46,16 +46,13 @@ time_gap=1 # debounce time - duration before photos can be taken again
 pixel_width = 800
 pixel_height = 600
 
-camera_vflip=False
-camera_hflip=False
+camera_vflip = False
+camera_hflip = False
 
-total_pics = 4 # number of pics to be taken
-capture_delay = 1 # delay between pics
-prep_delay = 5 # number of seconds at step 1 as users prep to have photo taken
-
-## LED FLASH TIME
-
-restart_delay = 10 # how long to display finished message before beginning a new session
+total_pics = 4  # number of pics to be taken
+capture_delay = 1  # delay between pics
+prep_delay = 5  # number of seconds at step 1 as users prep to have photo taken
+restart_delay = 10  # how long to display finished message before beginning a new session
 
 
 ########################
@@ -63,7 +60,7 @@ restart_delay = 10 # how long to display finished message before beginning a new
 ########################
 
 gif_delay = 25  # How much time between frames in the animated gif - in 100ths of second
-gif_width = 640  # dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
+gif_width = 640  #  dimensions of the gif to be uploaded - based on the maximum size twitter allows, make integer scale factor of the image resolution for faster scaling
 gif_height = 480
 
 ########################
@@ -81,11 +78,11 @@ replay_cycles = 3  # how many times to show each photo on-screen after taking
 
 fnt = ImageFont.truetype(real_path + "/assets/FreeSerif.ttf", 200) #font used to overlay on pictures during countdown
 countdown_number = 3  # time to countdown with overlay before starting 3
-countdown_time=.5
+countdown_time = .5
 overlay_alpha = 28  # opacity of overlay during countdown 28
 
-overlaytext_x = monitor_w / 2 #monitor_w / 2 - 100
-overlaytext_y = monitor_h / 2# monitor_h / 4 -50
+overlaytext_x = monitor_w / 2  # monitor_w / 2 - 100
+overlaytext_y = monitor_h / 2  # monitor_h / 4 -50
 
 ########################
 ### Internet Config ###
@@ -412,15 +409,13 @@ def photobooth_callback(self):
             time_since_last_use=time.time()
         else:
             print "photobooth assets already in use, doing nothing"
-            
-
 
 
 def start_photobooth(self):
     global photobooth_in_use
     photobooth_in_use = True
     ################################# Begin Step 1 #################################
-    screen=init_pygame()
+    screen = init_pygame()
     
     show_image(real_path + "/assets/blank.png",screen)
     print "Get Ready"
@@ -487,10 +482,8 @@ def start_photobooth(self):
     graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
     os.system(graphicsmagick) # make the .gif
 
-
-
     needtobackup = 1
-    if post_online: # turn off posting pics online in the variable declarations at the top of this document
+    if post_online:  # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to twitter Please check @ClarlPhoto soon."
         show_image(real_path + "/assets/uploading.png",screen)
         connected = is_connected() # check to see if you have an internet connection
@@ -623,9 +616,6 @@ tstart = time.time()
 try:
     while True:
         tcurrent = time.time()
-        
-        
-
         if ((tcurrent - tstart) > idle_time) and not photobooth_in_use:
             print "do idle stuff"
             idle_stuff()
@@ -633,7 +623,6 @@ try:
         else:
             time.sleep(.1)
 
-                
 
 finally:
     cleanup()
