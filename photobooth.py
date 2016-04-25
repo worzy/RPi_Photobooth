@@ -479,13 +479,9 @@ def start_photobooth(self):
     GPIO.output(processing_indicator_pin, True)  # turn on the LED
 
     print "Creating an animated gif"
-    if post_online:
-        show_image(real_path + "/assets/uploading.png",screen)
-    else:
-        show_image(real_path + "/assets/processing.png",screen)
-
+      
+    show_image(real_path + "/assets/processing.png",screen)
     pics_backup(now)  # backup pictures into folder *BEFORE* they get resized
-        
 
     # prepare the gif conversion string
     graphicsmagick = "gm convert -size " + str(gif_width) + "x" + str(gif_height) + " -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif"
@@ -496,6 +492,7 @@ def start_photobooth(self):
     needtobackup = 1
     if post_online: # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to twitter Please check @ClarlPhoto soon."
+        show_image(real_path + "/assets/uploading.png",screen)
         connected = is_connected() # check to see if you have an internet connection
         if not connected:
             needtobackup = 1
