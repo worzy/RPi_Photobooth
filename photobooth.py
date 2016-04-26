@@ -19,7 +19,6 @@ import shutil
 import random  # for choosing random status update
 from PIL import Image, ImageDraw, ImageFont # for creating mosaics and other basic image things. use Pillow implementation
 from twython import Twython # twitter library
-# from signal import alarm, signal, SIGALRM, SIGKILL  # stuff for the keyboard interrupt thing for the pygame
 
 ########################
 ### System Config ###
@@ -90,7 +89,6 @@ overlaytext_y = monitor_h / 2  # monitor_h / 4 -50
 
 test_server = 'www.google.com'
 
-
 #setup the twitter api client
 twitter_api = Twython(
     config.twitter_CONSUMER_KEY,
@@ -111,7 +109,6 @@ statuses = [
     "Say cheese! You're crackers!",
     "I heart Clarl!"
 ]
-
 
 ####################
 ### GPIO Config ####
@@ -134,7 +131,6 @@ uploading_indicator_pin = 27   #
 Start_Photobooth_pin = 23  # pin for the big red button to start the photobooth going
 Exit_Photobooth_pin = 24   # pin for button to end program
 button3_pin = 17  # extra button for something
-
 
 GPIO.setmode(GPIO.BCM)  # use the normal wiring numbering
 GPIO.setwarnings(False)  # ignore warnings if cleanup didnt run somehow
@@ -160,6 +156,7 @@ def shut_it_down():
     #GPIO.output(led3_pin,True)
     #GPIO.output(led4_pin,True)
     os.system("sudo halt")
+
 
 def led_init():
     GPIO.setup(countdown_led1_pin,GPIO.OUT)
@@ -264,7 +261,6 @@ def upload_single_missingfile():
 
 def idle_stuff():
     connected = is_connected()
-
     if connected and post_online:
         print "uploading missing files"
         upload_single_missingfile()
@@ -423,21 +419,19 @@ def start_photobooth(self):
 
     show_image(real_path + "/assets/instructions.png", screen)
 
-    
-
     #  flash the leds to
     led_all_on()
-    sleep(prep_delay/6)
+    sleep(1.0*prep_delay/6)
     led_all_off()
-    sleep(prep_delay/6)
+    sleep(1.0*prep_delay/6)
     led_all_on()
-    sleep(prep_delay/6)
+    sleep(1.0*prep_delay/6)
     led_all_off()
-    sleep(prep_delay/6)
+    sleep(1.0*prep_delay/6)
     led_all_on()
-    sleep(prep_delay/6)
+    sleep(1.0*prep_delay/6)
     led_all_off()
-    sleep(prep_delay/6)
+    sleep(1.0*prep_delay/6)
 
     show_image(real_path + "/assets/blank.png", screen)
     #setup camera
@@ -504,8 +498,8 @@ def start_photobooth(self):
 
     if needtobackup:
         try:  # make a text file as a note to upload the .gif later
-            file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
-            file.close()
+            file_flag = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
+            file_flag.close()
         except:
             print('Something went wrong. Could not write file.')
             #sys.exit(0) # quit Python
@@ -524,9 +518,7 @@ def start_photobooth(self):
         tb = sys.exc_info()[2]
         traceback.print_exception(e.__class__, e, tb)
 
-    
     print "All Photobooth stuff Done"
-
 
     if post_online:
         show_image(real_path + "/assets/finished_connected.png",screen)
@@ -538,9 +530,6 @@ def start_photobooth(self):
     show_image(real_path + "/assets/intro.png")
     #GPIO.output(photo_indicator_pin, True)  # turn on the LED
     photobooth_in_use = False
-    
-
-    
     
 
 
@@ -622,8 +611,6 @@ try:
             tstart = tcurrent
         else:
             time.sleep(.1)
-
-
 finally:
     cleanup()
     print "finally bit"
