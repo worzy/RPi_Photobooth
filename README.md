@@ -1,12 +1,11 @@
 # Pibooth - photobooth
-=======================
 
 A DIY photo booth using a Raspberry Pi that automatically:
-- Sends animated gifs to a Twitter account
-- IFTTT used to create pintrest/tumblr collections
-- Dropbox Cron task for uploading new files 
+- Sends animated gifs to a Twitter account (photobooth.py)
+- IFTTT used to create pintrest collections (outside this repo)
+- Dropbox uploading (dropboxsync.py run as a crontask) 
 
-Based off of: 
+Based on: 
  - http://www.drumminhands.com/2014/06/15/raspberry-pi-photo-booth/ -  [Code - Github](https://github.com/drumminhands/drumminhands_photobooth)
  - http://www.instructables.com/id/Raspberry-Pi-photo-booth-controller/  - [Code - Github](https://github.com/safay/RPi_photobooth)
 
@@ -23,5 +22,5 @@ Things new in this version:
 Useful Pi setup in Wiki 
 https://github.com/Jimbles/RPi_Photobooth/wiki/Useful-Raspberry-Pi-Settings#schedule-dropbox-checking-task
    
-   
+ 
    

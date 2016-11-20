@@ -13,8 +13,8 @@ file_path = '/home/pi/photobooth/' #where do you want to save the photos
 now = time.strftime("%Y%m%d%H%M%S") #get the current date and time for the start of the filename
 
 
-pixel_width = 800  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
-pixel_height = 600  # 666
+pixel_width = 2592  # 1000 #originally 500: use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+pixel_height = 1944  # 666
 
 # 2592x1944 1296x972 1296x730 640x480
 
@@ -105,14 +105,15 @@ camera = picamera.PiCamera()
 camera.resolution = (pixel_width, pixel_height)
 camera.vflip = camera_vflip
 camera.hflip = camera_hflip
-camera.start_preview()
+#camera.start_preview(fullscreen=False,window = (10,10,648,486))
+camera.start_preview(fullscreen=True)
 
 try:  # take the photos
     # for i, filename in enumerate(camera.capture_continuous(config.file_path + now + '-' + '{counter:02d}.jpg')):
     for i in range(0, total_pics):
         countdown_overlay(camera)
         filename = config.file_path + now + '-0' + str(i + 1) + '.jpg'
-        camera.capture(filename,resize=(gif_width,gif_height))
+        camera.capture(filename,resize=(pixel_width,pixel_height))
         #GPIO.output(led2_pin, True)  # turn on the LED
         print(filename)
         time.sleep(0.1)  # pause the LED on for just a bit
