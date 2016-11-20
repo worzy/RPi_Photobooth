@@ -24,9 +24,10 @@ from twython import Twython # twitter library
 ### System Config ###
 ########################
 
-post_online = 1  # default 1. Change to 0 if you don't want to upload pics.
+post_online_now = 0  # default 0. Change to 1 if you want to upload pics IMMEDIATELY
+post_online_idle = 1 # default 1. change to 0 if you dont want to upload pics even when idle
 backup_pics = 1  # backup pics = 1, no backup, change to 0
-fullscreen = 1  # set pygame to be fullscreen or not - useful for debugging
+fullscreen = 0  # set pygame to be fullscreen or not - useful for debugging
 real_path = os.path.dirname(os.path.realpath(__file__)) # path of code for references to pictures
 idle_time = 20  # time in seconds to wait to idle stuff
 missedfile_appendix = "-FILENOTUPLOADED" # thing added to end of file if it wasnt uploaded
@@ -261,7 +262,8 @@ def upload_single_missingfile():
 
 def idle_stuff():
     connected = is_connected()
-    if connected and post_online:
+    
+    if connected and post_online_idle: # if we have internet AND we are set to upload when idle
         print "uploading missing files"
         upload_single_missingfile()
     else:
@@ -392,9 +394,11 @@ def gif_backup(now):
 # define the photo taking function for when the big button is pressed
 
 def photobooth_callback(self):
+    #global variables for checking if button is in use
     global time_since_last_use
     global photobooth_in_use
 
+    # time since last called
     duration = time.time() - time_since_last_use
 
     if duration > time_gap:
@@ -409,17 +413,17 @@ def photobooth_callback(self):
 
 def start_photobooth(self):
     global photobooth_in_use
-    photobooth_in_use = True
+    photobooth_in_use = True # set global variable in use
     ################################# Begin Step 1 #################################
-    screen = init_pygame()
+    screen = init_pygame() # start pygame screen
     
-    show_image(real_path + "/assets/blank.png",screen)
+    show_image(real_path + "/assets/blank.png",screen) # show blank screen when loading
     print "Get Ready"
     #GPIO.output(photo_indicator_pin, False)  #turn big led off
 
-    show_image(real_path + "/assets/instructions.png", screen)
+    show_image(real_path + "/assets/instructions.png", screen) # display instructions - this saying takes 4 photos etc.
 
-    #  flash the leds to
+    #  flash the leds for more indication
     led_all_on()
     sleep(1.0*prep_delay/6)
     led_all_off()
@@ -441,7 +445,7 @@ def start_photobooth(self):
     camera.hflip = camera_hflip
     camera.start_preview()
 
-    #sleep(2) # warm up camera
+    sleep(1) # warm up camera - this lets it settle focus colour balance etc.
 
     ################################# Begin Step 2 #################################
     print "Taking pics"
@@ -452,9 +456,8 @@ def start_photobooth(self):
             countdown_overlay(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
             GPIO.output(photo_indicator_pin, True)  # turn on the LED
-            camera.capture(filename, resize=(gif_width, gif_height))
+            camera.capture(filename, resize=(gif_width, gif_height)) # TAKE ACTUAL PHOTO
             print(filename)
-            sleep(0.25) # pause the LED on for just a bit
             led_all_off()
             sleep(capture_delay)  # pause in-between shots
             if i == total_pics-1:
@@ -469,7 +472,7 @@ def start_photobooth(self):
 
     print "Creating an animated gif"
       
-    show_image(real_path + "/assets/processing.png",screen)
+    show_image(real_path + "/assets/processing.png",screen) # show processing info
     pics_backup(now)  # backup pictures into folder *BEFORE* they get resized
 
     # prepare the gif conversion string
@@ -477,7 +480,7 @@ def start_photobooth(self):
     os.system(graphicsmagick) # make the .gif
 
     needtobackup = 1
-    if post_online:  # turn off posting pics online in the variable declarations at the top of this document
+    if post_online_now:  # turn off posting pics online in the variable declarations at the top of this document
         print "Uploading to twitter Please check @ClarlPhoto soon."
         show_image(real_path + "/assets/uploading.png",screen)
         connected = is_connected() # check to see if you have an internet connection
@@ -487,7 +490,7 @@ def start_photobooth(self):
             try:
                 print "We have internet. Uploading now"
                 GPIO.output(uploading_indicator_pin, True)  # turn on the LED
-                tweet_pics(now)  # tweet pictures
+                tweet_pics(now)  # tweet pictures  - THIS IS WHERE WE SHOULD HAVE A TIMEOUT SET SOMEHOW
                 gif_backup(now)
                 needtobackup = 0
                 print "tweeting ok"
@@ -513,14 +516,14 @@ def start_photobooth(self):
 
     #GPIO.output(led4_pin,True) #turn on the LED
     try:
-        display_pics(now)
+        display_pics(now) # display all the pictures in sequence - this is faster than showing the gif
     except Exception, e:
         tb = sys.exc_info()[2]
         traceback.print_exception(e.__class__, e, tb)
 
     print "All Photobooth stuff Done"
 
-    if post_online:
+    if post_online_now or post_online_idle:
         show_image(real_path + "/assets/finished_connected.png",screen)
     else:
         show_image(real_path + "/assets/finished_offline.png",screen)
@@ -582,9 +585,9 @@ if not found:
 
 print "Deleting old files"
 # delete files in folder on startup
-files = glob.glob(config.file_path + '*')
-for f in files:
-    os.remove(f)
+#files = glob.glob(config.file_path + '*')
+#for f in files:
+#    os.remove(f)
 
 print "Photo booth app running..."
 # light up the lights to show the app is running
@@ -602,9 +605,11 @@ show_image(real_path + "/assets/intro.png")
 
 tstart = time.time()
 
+# MAIN LOOP
 try:
     while True:
         tcurrent = time.time()
+        # if idle time reached, then run the commands in the idle function, like upload
         if ((tcurrent - tstart) > idle_time) and not photobooth_in_use:
             print "do idle stuff"
             idle_stuff()
