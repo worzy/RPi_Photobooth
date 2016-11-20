@@ -555,7 +555,7 @@ led_all_off()
 # else is happening in the program, their function will be run
 
 # Shut down Pi
-#GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
+#GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
 # Button to close python
 GPIO.add_event_detect(Exit_Photobooth_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=2000) #use third button to exit python. Good while developing
