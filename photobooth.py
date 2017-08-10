@@ -43,14 +43,14 @@ time_gap=1 # debounce time - duration before photos can be taken again
 # 2592x1944 1296x972 1296x730 640x480 - use one of these to keep sensor full size
 # this is 1.25 size of 640x480 - this allows keeps correct aspect ratio but maximises the use of the screen.
 # images resized by gpu when taking picture as its quicker
-pixel_width = 800
-pixel_height = 600
+pixel_width = 1296
+pixel_height = 972
 
 camera_vflip = False
 camera_hflip = False
 
-total_pics = 4  # number of pics to be taken
-capture_delay = 1  # delay between pics
+total_pics = 6  # number of pics to be taken
+capture_delay = 0.1  # delay between pics
 prep_delay = 5  # number of seconds at step 1 as users prep to have photo taken
 restart_delay = 10  # how long to display finished message before beginning a new session
 
@@ -68,9 +68,9 @@ gif_height = 480
 ########################
 
 monitor_w = 1024  #1024 # this is res of makibes 7" screen
-monitor_h = 600  #600
+monitor_h = 650  #600
 replay_delay = (1.0 * gif_delay) / 100  # how much to wait in-between showing pics on-screen after taking
-replay_cycles = 3  # how many times to show each photo on-screen after taking
+replay_cycles = 5  # how many times to show each photo on-screen after taking
 
 ########################
 ### Countdown Config ###
@@ -98,7 +98,7 @@ twitter_api = Twython(
     config.twitter_ACCESS_SECRET,
 )
 
-hashtags = "#Clarl2016"
+hashtags = "#halehandgareth"
 
 statuses = [
     "Beep Boop! I was programmed to love!",
@@ -255,7 +255,7 @@ def upload_single_missingfile():
                 print "tweeting didnt work, keeping failure flag"
         else:
             print "couldnt find gif deleting backupflag"
-            os.remove(photopath + target_name)
+            os.remove(config.file_path + target_name)
     else:
         print "no missing uploads found"
 
@@ -324,8 +324,8 @@ def countdown_overlay(camera):
         time.sleep(countdown_time)
 
     # when this is finished, hide overlay by making it blank DO WE NEED THIS? CANT WE SET LAYER TO 2 OR REMOVE IT?
-    #overlay_cur = makeoverlay("")
-    #overlay_renderer.update(overlay_cur.tostring())
+    overlay_cur = makeoverlay("")
+    overlay_renderer.update(overlay_cur.tostring())
     camera.remove_overlay(overlay_renderer)
 
 
@@ -453,7 +453,7 @@ def start_photobooth(self):
     try: # take the photos
         #for i, filename in enumerate(camera.capture_continuous(config.file_path + now + '-' + '{counter:02d}.jpg')):
         for i in range(0, total_pics):
-            countdown_overlay(camera)
+            #countdown_overlay(camera)
             filename = config.file_path + now + '-0' + str(i+1) + '.jpg'
             GPIO.output(photo_indicator_pin, True)  # turn on the LED
             camera.capture(filename, resize=(gif_width, gif_height)) # TAKE ACTUAL PHOTO
