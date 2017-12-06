@@ -43,16 +43,16 @@ time_gap=1 # debounce time - duration before photos can be taken again
 # 2592x1944 1296x972 1296x730 640x480 - use one of these to keep sensor full size
 # this is 1.25 size of 640x480 - this allows keeps correct aspect ratio but maximises the use of the screen.
 # images resized by gpu when taking picture as its quicker
-pixel_width = 1296
-pixel_height = 972
+pixel_width = 640
+pixel_height = 480
 
 camera_vflip = False
 camera_hflip = False
 
 total_pics = 6  # number of pics to be taken
 capture_delay = 0.1  # delay between pics
-prep_delay = 5  # number of seconds at step 1 as users prep to have photo taken
-restart_delay = 10  # how long to display finished message before beginning a new session
+prep_delay = 1  # number of seconds at step 1 as users prep to have photo taken
+restart_delay = 5  # how long to display finished message before beginning a new session
 
 
 ########################
@@ -67,8 +67,8 @@ gif_height = 480
 ### Monitor Config ###
 ########################
 
-monitor_w = 1024  #1024 # this is res of makibes 7" screen
-monitor_h = 650  #600
+monitor_w = 1366  #1024 # this is res of makibes 7" screen
+monitor_h = 768  #600
 replay_delay = (1.0 * gif_delay) / 100  # how much to wait in-between showing pics on-screen after taking
 replay_cycles = 5  # how many times to show each photo on-screen after taking
 
@@ -106,9 +106,9 @@ statuses = [
     "Beep Boop! A memento of the day!",
     "Don't they look great!?",
     "I'm ready for my close up",
-    "Smile! You're on Clarl cam!",
+    "Smile! You're on camera!",
     "Say cheese! You're crackers!",
-    "I heart Clarl!"
+    "I heart Cyber-Duck!"
 ]
 
 ####################
@@ -424,26 +424,30 @@ def start_photobooth(self):
     show_image(real_path + "/assets/instructions.png", screen) # display instructions - this saying takes 4 photos etc.
 
     #  flash the leds for more indication
-    led_all_on()
-    sleep(1.0*prep_delay/6)
-    led_all_off()
-    sleep(1.0*prep_delay/6)
-    led_all_on()
-    sleep(1.0*prep_delay/6)
-    led_all_off()
-    sleep(1.0*prep_delay/6)
-    led_all_on()
-    sleep(1.0*prep_delay/6)
-    led_all_off()
-    sleep(1.0*prep_delay/6)
+    #led_all_on()
+    #sleep(1.0*prep_delay/6)
+    #led_all_off()
+    #sleep(1.0*prep_delay/6)
+    #led_all_on()
+    #sleep(1.0*prep_delay/6)
+    #led_all_off()
+    #sleep(1.0*prep_delay/6)
+    #led_all_on()
+    #sleep(1.0*prep_delay/6)
+    #led_all_off()
+    #sleep(1.0*prep_delay/6)
+
+    sleep(5)
 
     show_image(real_path + "/assets/blank.png", screen)
     #setup camera
     camera = picamera.PiCamera()
-    camera.resolution = (pixel_width, pixel_height)
+    camera.resolution = (pixel_width, pixel_height)    
+    camera.exposure_mode = "sports"    
     camera.vflip = camera_vflip
     camera.hflip = camera_hflip
     camera.start_preview()
+
 
     sleep(1) # warm up camera - this lets it settle focus colour balance etc.
 
@@ -583,7 +587,7 @@ if not found:
     raise Exception('No suitable video driver found!')
 
 
-print "Deleting old files"
+#print "Deleting old files"
 # delete files in folder on startup
 #files = glob.glob(config.file_path + '*')
 #for f in files:
