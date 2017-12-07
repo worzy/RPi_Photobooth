@@ -16,6 +16,7 @@ import socket
 import pygame  # pygame for displaying images
 import config
 import shutil
+import requests
 import random  # for choosing random status update
 from PIL import Image, ImageDraw, ImageFont # for creating mosaics and other basic image things. use Pillow implementation
 from twython import Twython # twitter library
@@ -52,7 +53,7 @@ camera_hflip = False
 total_pics = 6  # number of pics to be taken
 capture_delay = 0.1  # delay between pics
 prep_delay = 1  # number of seconds at step 1 as users prep to have photo taken
-restart_delay = 5  # how long to display finished message before beginning a new session
+restart_delay = 10  # how long to display finished message before beginning a new session
 
 
 ########################
@@ -98,12 +99,11 @@ twitter_api = Twython(
     config.twitter_ACCESS_SECRET,
 )
 
-hashtags = "#halehandgareth"
+hashtags = "#CyberDuckXmas"
 
 statuses = [
-    "Beep Boop! I was programmed to love!",
-    "Weddings are fun! Beep Boop!",
-    "Beep Boop! A memento of the day!",
+    "Xmas parties are fun! Beep Boop!",
+    "Beep Boop! Someone is having fun!",
     "Don't they look great!?",
     "I'm ready for my close up",
     "Smile! You're on camera!",
@@ -365,6 +365,16 @@ def tweet_pics(jpg_group):
     twitter_api.update_status(media_ids=[response['media_id']], status=status_total)
 
 
+def upload_pics(jpg_group):
+    # get filename for this group of photos
+    now = jpg_group
+    fname = config.file_path + now + '.gif'
+    print "Uploading: " + fname + " to website"
+    url = 'http://file.api.wechat.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE'
+    files = {'media': open(fname, 'rb')}
+    requests.post(url, files=files)
+
+
 def display_pics(jpg_group):
     # display all of the images with the same name
     # make a pygame screen object, reusing this each time prevents the black screen between each image
@@ -611,7 +621,11 @@ tstart = time.time()
 
 # MAIN LOOP
 try:
-    while True:
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                done = False
         tcurrent = time.time()
         # if idle time reached, then run the commands in the idle function, like upload
         if ((tcurrent - tstart) > idle_time) and not photobooth_in_use:
