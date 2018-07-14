@@ -244,8 +244,9 @@ def upload_single_missingfile():
         filetoupload = name_split[0]
         if os.path.exists(config.file_path + filetoupload + ".gif"):
             try:
-                tweet_pics(filetoupload)
-                pics_backup(filetoupload)
+                #tweet_pics(filetoupload)
+                upload_pics(filetoupload)
+		pics_backup(filetoupload)
                 gif_backup(filetoupload)
                 print "tweeting ok"
                 os.remove(config.file_path + target_name)
@@ -370,9 +371,10 @@ def upload_pics(jpg_group):
     now = jpg_group
     fname = config.file_path + now + '.gif'
     print "Uploading: " + fname + " to website"
-    url = 'http://file.api.wechat.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE'
-    files = {'media': open(fname, 'rb')}
-    requests.post(url, files=files)
+    url = 'http://gifloop.co.uk/api/upload'
+    up = {'image': (fname, open(fname, 'rb'), "multipart/form-data")}
+    response = requests.post(url, files = up)
+    print(response.text)
 
 
 def display_pics(jpg_group):
@@ -504,8 +506,9 @@ def start_photobooth(self):
             try:
                 print "We have internet. Uploading now"
                 GPIO.output(uploading_indicator_pin, True)  # turn on the LED
-                tweet_pics(now)  # tweet pictures  - THIS IS WHERE WE SHOULD HAVE A TIMEOUT SET SOMEHOW
-                gif_backup(now)
+                #tweet_pics(now)  # tweet pictures  - THIS IS WHERE WE SHOULD HAVE A TIMEOUT SET SOMEHOW
+                upload_pics(now)
+		gif_backup(now)
                 needtobackup = 0
                 print "tweeting ok"
                 break
@@ -623,9 +626,9 @@ tstart = time.time()
 try:
     running = True
     while running:
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-                done = False
+        #for event in pygame.event.get():
+            #if event.type == pygame.pygame.K_q:
+                #done = False
         tcurrent = time.time()
         # if idle time reached, then run the commands in the idle function, like upload
         if ((tcurrent - tstart) > idle_time) and not photobooth_in_use:
