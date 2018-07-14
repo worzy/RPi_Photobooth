@@ -371,7 +371,7 @@ def upload_pics(jpg_group):
     now = jpg_group
     fname = config.file_path + now + '.gif'
     print "Uploading: " + fname + " to website"
-    url = 'http://gifloop.co.uk/api/upload'
+    url = 'https://gifloop.co.uk/api/upload'
     up = {'image': (fname, open(fname, 'rb'), "multipart/form-data")}
     response = requests.post(url, files = up)
     print(response.text)
