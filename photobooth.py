@@ -626,9 +626,9 @@ tstart = time.time()
 try:
     running = True
     while running:
-        #for event in pygame.event.get():
-            #if event.type == pygame.pygame.K_q:
-                #done = False
+        for event in pygame.event.get():
+            if event.type == pygame.pygame.K_q:
+                done = False
         tcurrent = time.time()
         # if idle time reached, then run the commands in the idle function, like upload
         if ((tcurrent - tstart) > idle_time) and not photobooth_in_use:
